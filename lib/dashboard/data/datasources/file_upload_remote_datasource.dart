@@ -1,4 +1,4 @@
-// lib/home_feature/data/datasources/file_upload_remote_datasource.dart
+// lib/dashboard/data/datasources/file_upload_remote_datasource.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,6 +12,8 @@ abstract class FileUploadRemoteDataSource {
   Future<List<AmmunitionModel>> validateAmmunitionFile(String filePath);
   Future<void> uploadFirearms(List<FirearmModel> firearms);
   Future<void> uploadAmmunitions(List<AmmunitionModel> ammunitions);
+  Future<List<FirearmModel>> getFirearms();
+  Future<List<AmmunitionModel>> getAmmunitions();
 }
 
 class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
@@ -76,6 +78,30 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
     }
 
     await batch.commit();
+  }
+
+  @override
+  Future<List<FirearmModel>> getFirearms() async {
+    try {
+      final querySnapshot = await firestore.collection('firearms').get();
+      return querySnapshot.docs
+          .map((doc) => FirearmModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch firearms: $e');
+    }
+  }
+
+  @override
+  Future<List<AmmunitionModel>> getAmmunitions() async {
+    try {
+      final querySnapshot = await firestore.collection('ammunition').get();
+      return querySnapshot.docs
+          .map((doc) => AmmunitionModel.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch ammunitions: $e');
+    }
   }
 
   Future<List<Map<String, dynamic>>> _parseFile(String filePath) async {

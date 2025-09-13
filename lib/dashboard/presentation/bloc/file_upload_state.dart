@@ -1,5 +1,7 @@
-// lib/home_feature/presentation/bloc/file_upload_state.dart
+// lib/dashboard/presentation/bloc/file_upload_state.dart
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/firearm.dart';
+import '../../domain/entities/ammunition.dart';
 
 abstract class FileUploadState extends Equatable {
   const FileUploadState();
@@ -45,4 +47,22 @@ class FileUploadError extends FileUploadState {
 
   @override
   List<Object> get props => [message];
+}
+
+class FirearmsLoaded extends FileUploadState {
+  final List<Firearm> firearms;
+
+  const FirearmsLoaded({required this.firearms});
+
+  @override
+  List<Object> get props => [firearms];
+}
+
+class AmmunitionsLoaded extends FileUploadState {
+  final List<Ammunition> ammunitions;
+
+  const AmmunitionsLoaded({required this.ammunitions});
+
+  @override
+  List<Object> get props => [ammunitions];
 }

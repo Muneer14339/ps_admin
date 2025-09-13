@@ -1,4 +1,4 @@
-// lib/home_feature/data/repositories/file_upload_repository_impl.dart
+// lib/dashboard/data/repositories/file_upload_repository_impl.dart
 import 'package:dartz/dartz.dart';
 import '../../../core/error/failures.dart';
 import '../../domain/entities/firearm.dart';
@@ -56,14 +56,22 @@ class FileUploadRepositoryImpl implements FileUploadRepository {
   }
 
   @override
-  Future<Either<Failure, List<Ammunition>>> getAmmunitions() {
-    // TODO: implement getAmmunitions
-    throw UnimplementedError();
+  Future<Either<Failure, List<Firearm>>> getFirearms() async {
+    try {
+      final firearms = await remoteDataSource.getFirearms();
+      return Right(firearms);
+    } catch (e) {
+      return Left(FileFailure(e.toString()));
+    }
   }
 
   @override
-  Future<Either<Failure, List<Firearm>>> getFirearms() {
-    // TODO: implement getFirearms
-    throw UnimplementedError();
+  Future<Either<Failure, List<Ammunition>>> getAmmunitions() async {
+    try {
+      final ammunitions = await remoteDataSource.getAmmunitions();
+      return Right(ammunitions);
+    } catch (e) {
+      return Left(FileFailure(e.toString()));
+    }
   }
 }

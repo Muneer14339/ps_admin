@@ -13,15 +13,16 @@ import 'authentication/domain/usecases/logout_usecase.dart';
 import 'authentication/domain/usecases/signup_usecase.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_bloc.dart';
 import 'authentication/presentation/bloc/signup_bloc/signup_bloc.dart';
+
+// Dashboard imports
 import 'dashboard/data/datasources/file_upload_remote_datasource.dart';
 import 'dashboard/data/repositories/file_upload_repository_impl.dart';
 import 'dashboard/domain/repositories/file_upload_repository.dart';
 import 'dashboard/domain/usecases/upload_ammunition_usecase.dart';
 import 'dashboard/domain/usecases/upload_firearm_usecase.dart';
+import 'dashboard/domain/usecases/get_firearms_usecase.dart';
+import 'dashboard/domain/usecases/get_ammunitions_usecase.dart';
 import 'dashboard/presentation/bloc/file_upload_bloc.dart';
-
-// Home Feature imports
-
 
 final sl = GetIt.instance;
 
@@ -41,11 +42,13 @@ Future<void> init() async {
     ),
   );
 
-  // BLoC - Home Feature
+  // BLoC - Dashboard
   sl.registerFactory(
         () => FileUploadBloc(
       uploadFirearmUseCase: sl(),
       uploadAmmunitionUseCase: sl(),
+      getFirearmsUseCase: sl(),
+      getAmmunitionsUseCase: sl(),
     ),
   );
 
@@ -55,16 +58,18 @@ Future<void> init() async {
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
 
-  // Use cases - Home Feature
+  // Use cases - Dashboard
   sl.registerLazySingleton(() => UploadFirearmUseCase(sl()));
   sl.registerLazySingleton(() => UploadAmmunitionUseCase(sl()));
+  sl.registerLazySingleton(() => GetFirearmsUseCase(sl()));
+  sl.registerLazySingleton(() => GetAmmunitionsUseCase(sl()));
 
   // Repository - Authentication
   sl.registerLazySingleton<AuthRepository>(
         () => AuthRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Repository - Home Feature
+  // Repository - Dashboard
   sl.registerLazySingleton<FileUploadRepository>(
         () => FileUploadRepositoryImpl(remoteDataSource: sl()),
   );
@@ -77,7 +82,7 @@ Future<void> init() async {
     ),
   );
 
-  // Data sources - Home Feature
+  // Data sources - Dashboard
   sl.registerLazySingleton<FileUploadRemoteDataSource>(
         () => FileUploadRemoteDataSourceImpl(
       firestore: sl(),

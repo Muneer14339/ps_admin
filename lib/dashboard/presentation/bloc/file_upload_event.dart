@@ -1,4 +1,4 @@
-// lib/home_feature/presentation/bloc/file_upload_event.dart
+// lib/dashboard/presentation/bloc/file_upload_event.dart
 import 'package:equatable/equatable.dart';
 
 abstract class FileUploadEvent extends Equatable {
@@ -24,6 +24,14 @@ class UploadAmmunitionFileEvent extends FileUploadEvent {
 
   @override
   List<Object> get props => [filePath];
+}
+
+class GetFirearmsEvent extends FileUploadEvent {
+  const GetFirearmsEvent();
+}
+
+class GetAmmunitionsEvent extends FileUploadEvent {
+  const GetAmmunitionsEvent();
 }
 
 class ResetStateEvent extends FileUploadEvent {
