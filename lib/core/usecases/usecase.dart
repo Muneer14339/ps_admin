@@ -8,3 +8,14 @@ abstract class UseCase<Type, Params> {
 class NoParams {
   const NoParams();
 }
+
+// Use Case Parameters
+class UploadFirearmParams {
+  final String filePath;
+  UploadFirearmParams({required this.filePath});
+}
+
+class UploadAmmunitionParams {
+  final String filePath;
+  UploadAmmunitionParams({required this.filePath});
+}
