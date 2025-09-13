@@ -130,6 +130,9 @@ class ViewFirearmsView extends StatelessWidget {
               columnSpacing: 20,
               columns: const [
                 DataColumn(
+                  label: Text('#', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                DataColumn(
                   label: Text('Type', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
@@ -151,9 +154,12 @@ class ViewFirearmsView extends StatelessWidget {
                   label: Text('Make', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
-              rows: firearms.map((firearm) {
+              rows: firearms.asMap().entries.map((entry) {
+                final index = entry.key + 1; // 1-based index
+                final firearm = entry.value;
                 return DataRow(
                   cells: [
+                    DataCell(Text(index.toString())), // index number column
                     DataCell(Text(firearm.type)),
                     DataCell(Text(firearm.brand)),
                     DataCell(Text(firearm.model)),
@@ -170,4 +176,5 @@ class ViewFirearmsView extends StatelessWidget {
       ),
     );
   }
+
 }

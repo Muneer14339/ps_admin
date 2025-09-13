@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../dashboard/presentation/pages/home_feature_page.dart';
 import '../../../injection_container.dart';
-import '../../../home_page.dart';
 import '../bloc/login_bloc/auth_bloc.dart';
 import '../bloc/login_bloc/auth_event.dart';
 import '../bloc/login_bloc/auth_state.dart';
@@ -39,7 +39,7 @@ class _LoginFormState extends State<LoginForm> {
         if (state is AuthAuthenticated) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
           );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../dashboard/presentation/pages/home_feature_page.dart';
 import '../../../injection_container.dart';
-import '../../../home_page.dart';
 import '../bloc/signup_bloc/signup_bloc.dart';
 import '../bloc/signup_bloc/signup_event.dart';
 import '../bloc/signup_bloc/signup_state.dart';
@@ -40,7 +40,7 @@ class _SignupFormState extends State<SignupForm> {
         if (state is SignupSuccess) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
           );
         } else if (state is SignupError) {
           ScaffoldMessenger.of(context).showSnackBar(
