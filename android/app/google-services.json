@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "357128954353",
+    "project_id": "tlcdata-ae5b6",
+    "storage_bucket": "tlcdata-ae5b6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357128954353:android:dd746e45eee6ab6d56e450",
+        "android_client_info": {
+          "package_name": "com.example.pa_sreens"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "357128954353-3j7o5jrel8v67p0rcmrkcuq9heppuulp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYeK1vZsBSSBzBDffqWX_Wx6W7MiZXFkU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "357128954353-3j7o5jrel8v67p0rcmrkcuq9heppuulp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
