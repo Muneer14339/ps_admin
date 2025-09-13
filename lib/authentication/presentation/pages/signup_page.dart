@@ -2,46 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../injection_container.dart';
 import '../../../home_page.dart';
-import '../bloc/login_bloc/auth_bloc.dart';
-import '../bloc/login_bloc/auth_event.dart';
-import '../bloc/login_bloc/auth_state.dart';
-import 'signup_page.dart';
+import '../bloc/signup_bloc/signup_bloc.dart';
+import '../bloc/signup_bloc/signup_event.dart';
+import '../bloc/signup_bloc/signup_state.dart';
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatelessWidget {
+  const SignupPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocProvider(
-        create: (_) => sl<AuthBloc>(),
-        child: const LoginForm(),
+        create: (_) => sl<SignupBloc>(),
+        child: const SignupForm(),
       ),
     );
   }
 }
 
-class LoginForm extends StatefulWidget {
-  const LoginForm({super.key});
+class SignupForm extends StatefulWidget {
+  const SignupForm({super.key});
 
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  State<SignupForm> createState() => _SignupFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _SignupFormState extends State<SignupForm> {
+  final firstNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final locationController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
+    return BlocListener<SignupBloc, SignupState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
+        if (state is SignupSuccess) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const HomePage()),
           );
-        } else if (state is AuthError) {
+        } else if (state is SignupError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
@@ -67,10 +68,19 @@ class _LoginFormState extends State<LoginForm> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Login',
+                      'Sign Up',
                       style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 30),
+                    TextField(
+                      controller: firstNameController,
+                      decoration: InputDecoration(
+                        labelText: 'First Name',
+                        prefixIcon: const Icon(Icons.person),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     TextField(
                       controller: emailController,
                       decoration: InputDecoration(
@@ -89,43 +99,53 @@ class _LoginFormState extends State<LoginForm> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: locationController,
+                      decoration: InputDecoration(
+                        labelText: 'Location (Optional)',
+                        prefixIcon: const Icon(Icons.location_on),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
                     const SizedBox(height: 30),
-                    BlocBuilder<AuthBloc, AuthState>(
+                    BlocBuilder<SignupBloc, SignupState>(
                       builder: (context, state) {
                         return ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           ),
-                          onPressed: state is AuthLoading
+                          onPressed: state is SignupLoading
                               ? null
                               : () {
-                            context.read<AuthBloc>().add(
-                              LoginRequested(
+                            context.read<SignupBloc>().add(
+                              SignupRequested(
+                                firstName: firstNameController.text,
                                 email: emailController.text,
                                 password: passwordController.text,
+                                location: locationController.text.isEmpty
+                                    ? null
+                                    : locationController.text,
                               ),
                             );
                           },
-                          child: state is AuthLoading
+                          child: state is SignupLoading
                               ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                              : const Text('Login', style: TextStyle(fontSize: 16)),
+                              : const Text('Sign Up', style: TextStyle(fontSize: 16)),
                         );
                       },
                     ),
                     const SizedBox(height: 20),
                     TextButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SignupPage()),
-                        );
+                        Navigator.pop(context);
                       },
-                      child: const Text('Don\'t have an account? Sign Up'),
+                      child: const Text('Already have an account? Login'),
                     ),
                   ],
                 ),
@@ -139,8 +159,10 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   void dispose() {
+    firstNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    locationController.dispose();
     super.dispose();
   }
 }

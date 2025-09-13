@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 
 import 'authentication/data/datasources/auth_remote_datasource.dart';
@@ -7,9 +8,9 @@ import 'authentication/domain/repositories/auth_repository.dart';
 import 'authentication/domain/usecases/get_current_user_usecase.dart';
 import 'authentication/domain/usecases/login_usecase.dart';
 import 'authentication/domain/usecases/logout_usecase.dart';
-import 'authentication/presentation/bloc/auth_bloc.dart';
-
-
+import 'authentication/domain/usecases/signup_usecase.dart';
+import 'authentication/presentation/bloc/login_bloc/auth_bloc.dart';
+import 'authentication/presentation/bloc/signup_bloc/signup_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -23,8 +24,15 @@ Future<void> init() async {
     ),
   );
 
+  sl.registerFactory(
+        () => SignupBloc(
+      signupUseCase: sl(),
+    ),
+  );
+
   // Use cases
   sl.registerLazySingleton(() => LoginUseCase(sl()));
+  sl.registerLazySingleton(() => SignupUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
 
@@ -35,9 +43,13 @@ Future<void> init() async {
 
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
-        () => AuthRemoteDataSourceImpl(firebaseAuth: sl()),
+        () => AuthRemoteDataSourceImpl(
+      firebaseAuth: sl(),
+      firestore: sl(),
+    ),
   );
 
   // External
   sl.registerLazySingleton(() => FirebaseAuth.instance);
+  sl.registerLazySingleton(() => FirebaseFirestore.instance);
 }
