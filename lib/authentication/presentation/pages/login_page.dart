@@ -4,7 +4,7 @@ import '../../../injection_container.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import 'home_page.dart';
+import '../../../home_page.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});

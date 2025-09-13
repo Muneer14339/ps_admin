@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "357128954353",
-    "project_id": "tlcdata-ae5b6",
-    "storage_bucket": "tlcdata-ae5b6.firebasestorage.app"
+    "project_number": "922815540760",
+    "project_id": "tlcdatabase",
+    "storage_bucket": "tlcdatabase.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:357128954353:android:dd746e45eee6ab6d56e450",
+        "mobilesdk_app_id": "1:922815540760:android:30bc4b538cb528e1545d6d",
         "android_client_info": {
           "package_name": "com.example.pa_sreens"
         }
       },
       "oauth_client": [
         {
-          "client_id": "357128954353-3j7o5jrel8v67p0rcmrkcuq9heppuulp.apps.googleusercontent.com",
+          "client_id": "922815540760-bh67fghh6klck4ve4ls9pca15r711jhd.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCYeK1vZsBSSBzBDffqWX_Wx6W7MiZXFkU"
+          "current_key": "AIzaSyDiuIIEnWbhbpkQMWvONjasIC-LcPvl27s"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "357128954353-3j7o5jrel8v67p0rcmrkcuq9heppuulp.apps.googleusercontent.com",
+              "client_id": "922815540760-bh67fghh6klck4ve4ls9pca15r711jhd.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

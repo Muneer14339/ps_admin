@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'authentication/presentation/bloc/auth_bloc.dart';
 import 'authentication/presentation/bloc/auth_event.dart';
 import 'authentication/presentation/bloc/auth_state.dart';
-import 'authentication/presentation/pages/home_page.dart';
+import 'home_page.dart';
 import 'authentication/presentation/pages/login_page.dart';
 import 'injection_container.dart' as di;
 
