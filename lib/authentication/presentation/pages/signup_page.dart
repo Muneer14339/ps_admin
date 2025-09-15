@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../dashboard/presentation/pages/home_feature_page.dart';
+import '../../../home_page.dart';
 import '../../../injection_container.dart';
 import '../bloc/signup_bloc/signup_bloc.dart';
 import '../bloc/signup_bloc/signup_event.dart';
@@ -36,13 +37,25 @@ class _SignupFormState extends State<SignupForm> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<SignupBloc, SignupState>(
-      listener: (context, state) {
+      listener: (context, state)  {
         if (state is SignupSuccess) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
-          );
-        } else if (state is SignupError) {
+          final role = state.user.role ?? 0; // role null ho to default 0
+          if (role == 1) {
+            // Role = 0 → abhi jaise kaam ho raha waise hi
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
+            );
+          } else
+          {
+            // Role ≠ 1 → HomePage open karo
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomePage()),
+            );
+          }
+        }
+        else if (state is SignupError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );

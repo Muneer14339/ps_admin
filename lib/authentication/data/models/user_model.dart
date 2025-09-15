@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/user.dart';
 
+// data/models/user_model.dart
 class UserModel extends User {
   const UserModel({
     required super.uid,
@@ -10,6 +11,8 @@ class UserModel extends User {
     super.location,
     required super.createdAt,
     super.role = 0,
+    super.registeredFrom,
+    super.currentlyLogin,
   });
 
   factory UserModel.fromFirebaseUser(firebase.User firebaseUser) {
@@ -17,9 +20,11 @@ class UserModel extends User {
       uid: firebaseUser.uid,
       email: firebaseUser.email ?? '',
       firstName: firebaseUser.displayName ?? '',
-      location: null, // Firebase Auth doesn't store location, would need Firestore
+      location: null,
       createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
-      role: 0, // Default role is 0
+      role: 0,
+      registeredFrom: null,
+      currentlyLogin: null,
     );
   }
 
@@ -29,6 +34,8 @@ class UserModel extends User {
     required String firstName,
     String? location,
     required DateTime createdAt,
+    String? registeredFrom,
+    String? currentlyLogin
   }) {
     return UserModel(
       uid: uid,
@@ -36,7 +43,9 @@ class UserModel extends User {
       firstName: firstName,
       location: location,
       createdAt: createdAt,
-      role: 0, // Default role is always 0 for new signups
+      role: 0,
+      registeredFrom: registeredFrom,
+      currentlyLogin: currentlyLogin,
     );
   }
 
@@ -48,6 +57,8 @@ class UserModel extends User {
       location: data['location'],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       role: data['role'] ?? 0,
+      registeredFrom: data['registeredFrom'],
+      currentlyLogin: data['currentlyLogin'],
     );
   }
 }

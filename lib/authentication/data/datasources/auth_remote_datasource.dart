@@ -28,6 +28,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (result.user != null) {
       // Firestore se user data fetch karo
+      await firestore.collection('users').doc(result.user!.uid).update({
+        'currentlyLogin': 'PA',  // <-- update current app
+      });
+
       final userDoc = await firestore
           .collection('users')
           .doc(result.user!.uid)
@@ -76,6 +80,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'location': location,
         'createdAt': FieldValue.serverTimestamp(),
         'role': 0,
+        'registeredFrom': 'PA',      // <-- NEW
+        'currentlyLogin': 'PA',      // <-- initially empty
+        'password':password
       };
 
       await firestore
@@ -90,6 +97,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         firstName: firstName,
         location: location,
         createdAt: DateTime.now(),
+        registeredFrom: 'PA',
+        currentlyLogin: 'PA'
       );
     } else {
       throw Exception('Signup failed');

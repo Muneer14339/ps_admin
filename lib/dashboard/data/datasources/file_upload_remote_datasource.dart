@@ -58,43 +58,54 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
 
   @override
   Future<void> uploadFirearms(List<FirearmModel> firearms) async {
-    final batch = firestore.batch();
     final collection = firestore.collection('firearms');
 
-    // First, delete all existing documents
+    // Get existing count
     final existingDocs = await collection.get();
+    final existingCount = existingDocs.docs.length;
+
+    // Check length condition
+    if (firearms.length < existingCount) {
+      throw Exception(
+          'Upload failed: Firearms list length (${firearms.length}) is less than existing records ($existingCount).');
+    }
+
+    // Batch delete and upload
+    final batch = firestore.batch();
     for (final doc in existingDocs.docs) {
       batch.delete(doc.reference);
     }
-
-    // Then add new documents
     for (final firearm in firearms) {
       final docRef = collection.doc();
       batch.set(docRef, firearm.toMap());
     }
-
     await batch.commit();
   }
 
   @override
   Future<void> uploadAmmunitions(List<AmmunitionModel> ammunitions) async {
-    final batch = firestore.batch();
     final collection = firestore.collection('ammunition');
 
-    // First, delete all existing documents
+    // Get existing count
     final existingDocs = await collection.get();
+    final existingCount = existingDocs.docs.length;
+
+    if (ammunitions.length < existingCount) {
+      throw Exception(
+          'Upload failed: Ammunition list length (${ammunitions.length}) is less than existing records ($existingCount).');
+    }
+
+    final batch = firestore.batch();
     for (final doc in existingDocs.docs) {
       batch.delete(doc.reference);
     }
-
-    // Then add new documents
     for (final ammunition in ammunitions) {
       final docRef = collection.doc();
       batch.set(docRef, ammunition.toMap());
     }
-
     await batch.commit();
   }
+
 
   @override
   Future<List<FirearmModel>> getFirearms() async {

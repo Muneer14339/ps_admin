@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+// domain/entities/user.dart
 class User extends Equatable {
   final String uid;
   final String email;
@@ -7,6 +8,8 @@ class User extends Equatable {
   final String? location;
   final DateTime createdAt;
   final int role;
+  final String? registeredFrom; // NEW
+  final String? currentlyLogin; // NEW
 
   const User({
     required this.uid,
@@ -15,8 +18,11 @@ class User extends Equatable {
     this.location,
     required this.role,
     required this.createdAt,
+    this.registeredFrom,
+    this.currentlyLogin,
   });
 
   @override
-  List<Object?> get props => [uid, email, firstName, location, createdAt,role];
+  List<Object?> get props =>
+      [uid, email, firstName, location, createdAt, role, registeredFrom, currentlyLogin];
 }
