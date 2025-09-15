@@ -15,14 +15,14 @@ import 'authentication/presentation/bloc/login_bloc/auth_bloc.dart';
 import 'authentication/presentation/bloc/signup_bloc/signup_bloc.dart';
 
 // Dashboard imports
-import 'dashboard/data/datasources/file_upload_remote_datasource.dart';
-import 'dashboard/data/repositories/file_upload_repository_impl.dart';
-import 'dashboard/domain/repositories/file_upload_repository.dart';
-import 'dashboard/domain/usecases/upload_ammunition_usecase.dart';
-import 'dashboard/domain/usecases/upload_firearm_usecase.dart';
-import 'dashboard/domain/usecases/get_firearms_usecase.dart';
-import 'dashboard/domain/usecases/get_ammunitions_usecase.dart';
-import 'dashboard/presentation/bloc/file_upload_bloc.dart';
+import 'admin_dashboard/data/datasources/file_upload_remote_datasource.dart';
+import 'admin_dashboard/data/repositories/file_upload_repository_impl.dart';
+import 'admin_dashboard/domain/repositories/file_upload_repository.dart';
+import 'admin_dashboard/domain/usecases/upload_ammunition_usecase.dart';
+import 'admin_dashboard/domain/usecases/upload_firearm_usecase.dart';
+import 'admin_dashboard/domain/usecases/get_firearms_usecase.dart';
+import 'admin_dashboard/domain/usecases/get_ammunitions_usecase.dart';
+import 'admin_dashboard/presentation/bloc/file_upload_bloc.dart';
 
 final sl = GetIt.instance;
 

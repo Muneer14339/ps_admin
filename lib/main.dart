@@ -2,11 +2,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'admin_dashboard/presentation/pages/admin_home_page.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_bloc.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_event.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_state.dart';
 import 'authentication/presentation/pages/login_page.dart';
-import 'dashboard/presentation/pages/home_feature_page.dart';
 import 'home_page.dart';
 import 'injection_container.dart' as di;
 
@@ -50,7 +50,7 @@ class AuthWrapper extends StatelessWidget {
         } else if (state is AuthAuthenticated) {
           final role = state.user.role ?? 1;
           return role == 1
-              ? const HomeFeaturePage() // role=1 par purana page
+              ? const AdminHomePage() // role=1 par purana page
               : const HomePage();       // role≠1 par HomePage
         } else {
           return const LoginPage();

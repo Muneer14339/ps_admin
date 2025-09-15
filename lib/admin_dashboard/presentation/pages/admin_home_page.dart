@@ -12,8 +12,8 @@ import '../bloc/file_upload_state.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/responsive_body.dart';
 
-class HomeFeaturePage extends StatelessWidget {
-  const HomeFeaturePage({super.key});
+class AdminHomePage extends StatelessWidget {
+  const AdminHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +22,13 @@ class HomeFeaturePage extends StatelessWidget {
         BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
         BlocProvider<FileUploadBloc>(create: (_) => sl<FileUploadBloc>()),
       ],
-      child: const HomeFeatureView(),
+      child: const AdminHomeView(),
     );
   }
 }
 
-class HomeFeatureView extends StatelessWidget {
-  const HomeFeatureView({super.key});
+class AdminHomeView extends StatelessWidget {
+  const AdminHomeView({super.key});
 
   @override
   Widget build(BuildContext context) {

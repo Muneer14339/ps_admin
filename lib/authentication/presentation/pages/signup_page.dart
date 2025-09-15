@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../dashboard/presentation/pages/home_feature_page.dart';
+import '../../../admin_dashboard/presentation/pages/admin_home_page.dart';
 import '../../../home_page.dart';
 import '../../../injection_container.dart';
 import '../bloc/signup_bloc/signup_bloc.dart';
@@ -44,7 +44,7 @@ class _SignupFormState extends State<SignupForm> {
             // Role = 0 → abhi jaise kaam ho raha waise hi
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
+              MaterialPageRoute(builder: (_) => const AdminHomePage()),
             );
           } else
           {

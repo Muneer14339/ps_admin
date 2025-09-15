@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pa_sreens/dashboard/presentation/widgets/section_title.dart';
 
 import '../bloc/file_upload_bloc.dart';
 import '../bloc/file_upload_state.dart';
-import '../pages/home_feature_page.dart';
+import '../pages/admin_home_page.dart';
 import '../pages/view_ammunitions_page.dart';
 import '../pages/view_firearms_page.dart';
 import 'adaptive_option.dart';
 import 'header.dart';
+import 'section_title.dart';
 
 
 const _kPrimaryGradientStart = Color(0xFF6A11CB);
