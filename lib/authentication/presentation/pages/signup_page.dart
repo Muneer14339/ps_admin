@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../admin_dashboard/presentation/pages/admin_home_page.dart';
-import '../../../home_page.dart';
 import '../../../injection_container.dart';
+import '../../../user_dashboard/presentation/pages/user_dashboard_page.dart';
 import '../bloc/signup_bloc/signup_bloc.dart';
 import '../bloc/signup_bloc/signup_event.dart';
 import '../bloc/signup_bloc/signup_state.dart';
@@ -51,7 +51,7 @@ class _SignupFormState extends State<SignupForm> {
             // Role ≠ 1 → HomePage open karo
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomePage()),
+              MaterialPageRoute(builder: (_) => const UserDashboardPage()),
             );
           }
         }

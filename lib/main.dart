@@ -3,11 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'admin_dashboard/presentation/pages/admin_home_page.dart';
+import 'user_dashboard/presentation/pages/user_dashboard_page.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_bloc.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_event.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_state.dart';
 import 'authentication/presentation/pages/login_page.dart';
-import 'home_page.dart';
 import 'injection_container.dart' as di;
 
 void main() async {
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Auth App',
+      title: 'PulseAim App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
@@ -45,13 +45,22 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, state) {
         if (state is AuthLoading || state is AuthInitial) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Color(0xFF0F1115),
+            body: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF57B7FF),
+              ),
+            ),
           );
         } else if (state is AuthAuthenticated) {
-          final role = state.user.role ?? 1;
-          return role == 1
-              ? const AdminHomePage() // role=1 par purana page
-              : const HomePage();       // role≠1 par HomePage
+          final role = state.user.role;
+          if (role == 1) {
+            // Admin role - show admin dashboard
+            return const AdminHomePage();
+          } else {
+            // Regular user role - show user dashboard with armory
+            return const UserDashboardPage();
+          }
         } else {
           return const LoginPage();
         }

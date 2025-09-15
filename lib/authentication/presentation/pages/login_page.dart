@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pa_sreens/user_dashboard/presentation/pages/user_dashboard_page.dart';
 import '../../../admin_dashboard/presentation/pages/admin_home_page.dart';
-import '../../../home_page.dart';
 import '../../../injection_container.dart';
 import '../bloc/login_bloc/auth_bloc.dart';
 import '../bloc/login_bloc/auth_event.dart';
@@ -49,7 +49,7 @@ class _LoginFormState extends State<LoginForm> {
             // Role ≠ 1 → HomePage open karo
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const HomePage()),
+              MaterialPageRoute(builder: (_) => const UserDashboardPage()),
             );
           }
         } else if (state is AuthError) {
