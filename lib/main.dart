@@ -7,6 +7,7 @@ import 'authentication/presentation/bloc/login_bloc/auth_event.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_state.dart';
 import 'authentication/presentation/pages/login_page.dart';
 import 'dashboard/presentation/pages/home_feature_page.dart';
+import 'home_page.dart';
 import 'injection_container.dart' as di;
 
 void main() async {
@@ -47,7 +48,10 @@ class AuthWrapper extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         } else if (state is AuthAuthenticated) {
-          return const HomeFeaturePage();
+          final role = state.user.role ?? 1;
+          return role == 1
+              ? const HomeFeaturePage() // role=1 par purana page
+              : const HomePage();       // role≠1 par HomePage
         } else {
           return const LoginPage();
         }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../dashboard/presentation/pages/home_feature_page.dart';
+import '../../../home_page.dart';
 import '../../../injection_container.dart';
 import '../bloc/login_bloc/auth_bloc.dart';
 import '../bloc/login_bloc/auth_event.dart';
@@ -37,10 +38,20 @@ class _LoginFormState extends State<LoginForm> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
-          );
+          final role = state.user.role ?? 0; // role null ho to default 0
+          if (role == 1) {
+            // Role = 0 → abhi jaise kaam ho raha waise hi
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeFeaturePage()),
+            );
+          } else {
+            // Role ≠ 1 → HomePage open karo
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomePage()),
+            );
+          }
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
