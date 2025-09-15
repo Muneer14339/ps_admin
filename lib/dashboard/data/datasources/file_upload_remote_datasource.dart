@@ -26,7 +26,8 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
     final data = await _parseFile(filePath);
     if (data.isEmpty) throw Exception('File is empty');
 
-    final headers = data.first.keys.map((e) => e.toString().toLowerCase()).toSet();
+    // Normalize headers to lowercase for comparison
+    final headers = data.first.keys.map((e) => e.toString().toLowerCase().trim()).toSet();
     const requiredHeaders = {
       'type', 'brand', 'model', 'generation',
       'caliber', 'firing_machanism', 'make'
@@ -44,7 +45,8 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
     final data = await _parseFile(filePath);
     if (data.isEmpty) throw Exception('File is empty');
 
-    final headers = data.first.keys.map((e) => e.toString().toLowerCase()).toSet();
+    // Normalize headers to lowercase for comparison
+    final headers = data.first.keys.map((e) => e.toString().toLowerCase().trim()).toSet();
     const requiredHeaders = {'brand', 'caliber', 'bullet weight (gr)'};
 
     if (!requiredHeaders.every((header) => headers.contains(header))) {
@@ -59,6 +61,13 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
     final batch = firestore.batch();
     final collection = firestore.collection('firearms');
 
+    // First, delete all existing documents
+    final existingDocs = await collection.get();
+    for (final doc in existingDocs.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // Then add new documents
     for (final firearm in firearms) {
       final docRef = collection.doc();
       batch.set(docRef, firearm.toMap());
@@ -72,6 +81,13 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
     final batch = firestore.batch();
     final collection = firestore.collection('ammunition');
 
+    // First, delete all existing documents
+    final existingDocs = await collection.get();
+    for (final doc in existingDocs.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // Then add new documents
     for (final ammunition in ammunitions) {
       final docRef = collection.doc();
       batch.set(docRef, ammunition.toMap());
@@ -110,11 +126,16 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
 
     if (extension == 'csv') {
       final content = await file.readAsString();
-      final List<List<dynamic>> csvData = const CsvToListConverter().convert(content);
+      final cleanedContent = content.replaceAll('\uFEFF', ''); // Remove BOM
+      final List<List<dynamic>> csvData =
+      const CsvToListConverter(eol: '\n').convert(cleanedContent);
 
       if (csvData.isEmpty) return [];
 
-      final headers = csvData.first.map((e) => e.toString()).toList();
+// Normalize headers
+      final headers = csvData.first
+          .map((e) => e.toString().toLowerCase().trim())
+          .toList();
       final rows = csvData.skip(1).toList();
 
       return rows.map((row) {
@@ -131,7 +152,8 @@ class FileUploadRemoteDataSourceImpl implements FileUploadRemoteDataSource {
       final sheet = excel.tables.values.first;
       if (sheet == null || sheet.rows.isEmpty) return [];
 
-      final headers = sheet.rows.first.map((cell) => cell?.value.toString() ?? '').toList();
+      // Normalize headers to lowercase and trim whitespace
+      final headers = sheet.rows.first.map((cell) => cell?.value.toString().toLowerCase().trim() ?? '').toList();
       final rows = sheet.rows.skip(1).toList();
 
       return rows.map((row) {

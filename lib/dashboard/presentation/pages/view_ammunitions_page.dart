@@ -130,6 +130,9 @@ class ViewAmmunitionsView extends StatelessWidget {
               columnSpacing: 30,
               columns: const [
                 DataColumn(
+                  label: Text('#', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                DataColumn(
                   label: Text('Brand', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
@@ -139,9 +142,12 @@ class ViewAmmunitionsView extends StatelessWidget {
                   label: Text('Bullet Weight (gr)', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
-              rows: ammunitions.map((ammunition) {
+              rows: ammunitions.asMap().entries.map((entry) {
+                final index = entry.key + 1; // 1-based index
+                final ammunition = entry.value;
                 return DataRow(
                   cells: [
+                    DataCell(Text(index.toString())), // index column
                     DataCell(Text(ammunition.brand)),
                     DataCell(Text(ammunition.caliber)),
                     DataCell(Text(ammunition.bulletWeight)),
@@ -154,4 +160,5 @@ class ViewAmmunitionsView extends StatelessWidget {
       ),
     );
   }
+
 }

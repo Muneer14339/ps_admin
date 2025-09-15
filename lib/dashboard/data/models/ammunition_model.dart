@@ -22,18 +22,18 @@ class AmmunitionModel extends Ammunition {
     }
 
     return AmmunitionModel(
-      brand: map['Brand']?.toString() ?? '',
-      caliber: map['Caliber']?.toString() ?? '',
-      bulletWeight: map['Bullet Weight (gr)']?.toString() ?? '',
+      brand: map['brand']?.toString() ?? '',
+      caliber: map['caliber']?.toString() ?? '',
+      bulletWeight: map['bullet weight (gr)']?.toString() ?? '',
       additionalFields: additionalFields.isEmpty ? null : additionalFields,
     );
   }
 
   Map<String, dynamic> toMap() {
     final map = <String, dynamic>{
-      'Brand': brand,
-      'Caliber': caliber,
-      'Bullet Weight (gr)': bulletWeight,
+      'brand': brand,
+      'caliber': caliber,
+      'bullet weight (gr)': bulletWeight,
     };
 
     if (additionalFields != null) {
