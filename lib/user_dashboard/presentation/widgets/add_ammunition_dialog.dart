@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/usecases/usecase.dart';
 import '../../domain/entities/armory_ammunition.dart';
 import '../../domain/entities/dropdown_option.dart';
+import '../../domain/usecases/get_dropdown_options_usecase.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
@@ -23,14 +24,21 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
   final _dropdownValues = <String, String?>{};
   final _errors = <String, String?>{};
 
+  // Dropdown options lists
   List<DropdownOption> _ammunitionBrands = [];
   List<DropdownOption> _calibers = [];
+  List<DropdownOption> _bulletTypes = [];
+
+  // Loading states for individual dropdowns
+  bool _loadingBrands = false;
+  bool _loadingCalibers = false;
+  bool _loadingBulletTypes = false;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
-    _loadDropdownData();
+    _loadInitialData();
   }
 
   void _initializeControllers() {
@@ -47,13 +55,86 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
     _controllers['quantity']?.text = '20';
   }
 
-  void _loadDropdownData() {
+  void _loadInitialData() {
+    setState(() {
+      _loadingBrands = true;
+    });
+
     context.read<ArmoryBloc>().add(
       const LoadDropdownOptionsEvent(type: DropdownType.ammunitionBrands),
     );
+  }
+
+  void _loadCalibersForBrand(String brand) {
+    setState(() {
+      _loadingCalibers = true;
+      _calibers.clear();
+      _bulletTypes.clear();
+      // Clear dependent dropdown values
+      _dropdownValues['caliber'] = null;
+      _dropdownValues['bulletType'] = null;
+    });
+
     context.read<ArmoryBloc>().add(
-      const LoadDropdownOptionsEvent(type: DropdownType.calibers),
+      LoadDropdownOptionsEvent(
+        type: DropdownType.calibers,
+        filterValue: brand, // Filter calibers by brand
+      ),
     );
+  }
+
+  void _loadBulletTypesForBrandCaliber(String brand, String caliber) {
+    setState(() {
+      _loadingBulletTypes = true;
+      _bulletTypes.clear();
+      _dropdownValues['bulletType'] = null;
+    });
+
+    // This would load bullet weights/types based on brand and caliber
+    // For now, we'll provide common bullet types
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _bulletTypes = _getCommonBulletTypes(caliber);
+        _loadingBulletTypes = false;
+      });
+    });
+  }
+
+  List<DropdownOption> _getCommonBulletTypes(String caliber) {
+    // Common bullet types based on caliber
+    switch (caliber.toLowerCase()) {
+      case '.223 rem':
+      case '5.56x45':
+        return [
+          const DropdownOption(value: '55gr FMJ', label: '55 gr FMJ'),
+          const DropdownOption(value: '62gr M855', label: '62 gr M855'),
+          const DropdownOption(value: '77gr OTM', label: '77 gr OTM'),
+          const DropdownOption(value: '69gr SMK', label: '69 gr SMK'),
+        ];
+      case '.308 win':
+      case '7.62x51':
+        return [
+          const DropdownOption(value: '147gr FMJ', label: '147 gr FMJ'),
+          const DropdownOption(value: '168gr HPBT', label: '168 gr HPBT'),
+          const DropdownOption(value: '175gr SMK', label: '175 gr SMK'),
+          const DropdownOption(value: '178gr ELD-X', label: '178 gr ELD-X'),
+        ];
+      case '9mm':
+        return [
+          const DropdownOption(value: '115gr FMJ', label: '115 gr FMJ'),
+          const DropdownOption(value: '124gr HP', label: '124 gr HP'),
+          const DropdownOption(value: '147gr HP', label: '147 gr HP'),
+        ];
+      case '.45 acp':
+        return [
+          const DropdownOption(value: '230gr FMJ', label: '230 gr FMJ'),
+          const DropdownOption(value: '185gr HP', label: '185 gr HP'),
+        ];
+      default:
+        return [
+          const DropdownOption(value: 'custom', label: 'Custom - Enter manually'),
+        ];
+    }
   }
 
   @override
@@ -66,7 +147,9 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
   Widget build(BuildContext context) {
     return BlocListener<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
-        if (state is ArmoryActionSuccess) {
+        if (state is DropdownOptionsLoaded) {
+          _handleDropdownOptionsLoaded(state.options);
+        } else if (state is ArmoryActionSuccess) {
           Navigator.of(context).pop();
         }
       },
@@ -75,7 +158,6 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
           width: MediaQuery.of(context).size.width * 0.9,
-          //maxWidth: 720,
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.9,
           ),
@@ -90,6 +172,20 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
         ),
       ),
     );
+  }
+
+  void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
+    if (_loadingBrands) {
+      setState(() {
+        _ammunitionBrands = options;
+        _loadingBrands = false;
+      });
+    } else if (_loadingCalibers) {
+      setState(() {
+        _calibers = options;
+        _loadingCalibers = false;
+      });
+    }
   }
 
   Widget _buildHeader() {
@@ -117,7 +213,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Text(
-              'Level 1 UI',
+              'Smart Dropdowns',
               style: TextStyle(
                 color: Color(0xFF57B7FF),
                 fontSize: 11,
@@ -143,64 +239,101 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Brand and Line
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isTablet = constraints.maxWidth > 520;
-                if (isTablet) {
-                  return Row(
-                    children: [
-                      Expanded(child: _buildDropdownField('Brand *', 'brand', _ammunitionBrands, isRequired: true)),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildTextField('Product Line', 'line', hintText: 'e.g., Gold Medal Match, V-Max')),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _buildDropdownField('Brand *', 'brand', _ammunitionBrands, isRequired: true),
-                      const SizedBox(height: 16),
-                      _buildTextField('Product Line', 'line', hintText: 'e.g., Gold Medal Match, V-Max'),
-                    ],
-                  );
+            // Step 1: Brand selection (triggers caliber loading)
+            _buildDropdownField(
+              'Brand *',
+              'brand',
+              _ammunitionBrands,
+              isRequired: true,
+              isLoading: _loadingBrands,
+              onChanged: (value) {
+                if (value != null) {
+                  _loadCalibersForBrand(value);
                 }
               },
             ),
             const SizedBox(height: 16),
 
-            // Caliber and Bullet
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isTablet = constraints.maxWidth > 520;
-                if (isTablet) {
-                  return Row(
-                    children: [
-                      Expanded(child: _buildDropdownField('Caliber *', 'caliber', _calibers, isRequired: true)),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildTextField('Bullet Weight & Type *', 'bullet', isRequired: true, hintText: 'e.g., 168 gr HPBT, 55 gr FMJ')),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _buildDropdownField('Caliber *', 'caliber', _calibers, isRequired: true),
-                      const SizedBox(height: 16),
-                      _buildTextField('Bullet Weight & Type *', 'bullet', isRequired: true, hintText: 'e.g., 168 gr HPBT, 55 gr FMJ'),
-                    ],
-                  );
+            // Product Line field
+            _buildTextField(
+              'Product Line',
+              'line',
+              hintText: 'e.g., Gold Medal Match, V-Max, American Eagle',
+            ),
+            const SizedBox(height: 16),
+
+            // Step 2: Caliber selection (shows after brand is selected)
+            _buildDropdownField(
+              'Caliber *',
+              'caliber',
+              _calibers,
+              isRequired: true,
+              isLoading: _loadingCalibers,
+              enabled: _dropdownValues['brand'] != null,
+              onChanged: (value) {
+                if (value != null && _dropdownValues['brand'] != null) {
+                  _loadBulletTypesForBrandCaliber(_dropdownValues['brand']!, value);
                 }
               },
             ),
             const SizedBox(height: 16),
 
-            // Quantity, Status, Lot
+            // Step 3: Bullet type selection or manual entry
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDropdownField(
+                  'Bullet Weight & Type *',
+                  'bulletType',
+                  _bulletTypes,
+                  isRequired: false,
+                  isLoading: _loadingBulletTypes,
+                  enabled: _dropdownValues['caliber'] != null,
+                  onChanged: (value) {
+                    if (value == 'custom') {
+                      // Clear the dropdown and let user enter manually
+                      setState(() {
+                        _dropdownValues['bulletType'] = null;
+                      });
+                    } else if (value != null) {
+                      // Set the bullet text field to the selected value
+                      _controllers['bullet']?.text = value;
+                    }
+                  },
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Or enter manually:',
+                  style: TextStyle(
+                    color: const Color(0xFF9AA4B2).withOpacity(0.8),
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _buildTextField(
+                  'Custom Bullet Description',
+                  'bullet',
+                  hintText: 'e.g., 168 gr HPBT, 55 gr FMJ, 77 gr SMK',
+                  enabled: _dropdownValues['caliber'] != null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Quantity, Status, Lot in responsive layout
             LayoutBuilder(
               builder: (context, constraints) {
                 final isTablet = constraints.maxWidth > 520;
                 if (isTablet) {
                   return Row(
                     children: [
-                      Expanded(child: _buildTextField('Quantity (rounds) *', 'quantity', isRequired: true, keyboardType: TextInputType.number, hintText: '20')),
+                      Expanded(child: _buildTextField(
+                        'Quantity (rounds) *',
+                        'quantity',
+                        isRequired: true,
+                        keyboardType: TextInputType.number,
+                        hintText: '20',
+                      )),
                       const SizedBox(width: 10),
                       Expanded(child: _buildDropdownField(
                         'Status *',
@@ -219,7 +352,13 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
                 } else {
                   return Column(
                     children: [
-                      _buildTextField('Quantity (rounds) *', 'quantity', isRequired: true, keyboardType: TextInputType.number, hintText: '20'),
+                      _buildTextField(
+                        'Quantity (rounds) *',
+                        'quantity',
+                        isRequired: true,
+                        keyboardType: TextInputType.number,
+                        hintText: '20',
+                      ),
                       const SizedBox(height: 16),
                       _buildDropdownField(
                         'Status *',
@@ -244,7 +383,42 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
               'Notes',
               'notes',
               maxLines: 3,
-              hintText: 'Performance notes, accuracy, reliability, etc.',
+              hintText: 'Performance notes, accuracy, reliability, chronograph data, etc.',
+            ),
+
+            // Add helpful info card
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF57B7FF).withOpacity(0.05),
+                border: Border.all(color: const Color(0xFF57B7FF).withOpacity(0.2)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '💡 Smart Entry Tips',
+                    style: TextStyle(
+                      color: const Color(0xFF57B7FF),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '• Select brand first to see available calibers\n'
+                        '• Choose caliber to see common bullet types\n'
+                        '• Use "Custom" option for special loads\n'
+                        '• Notes field is great for chronograph data',
+                    style: TextStyle(
+                      color: const Color(0xFF9AA4B2),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -259,6 +433,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
         int maxLines = 1,
         String? hintText,
         TextInputType keyboardType = TextInputType.text,
+        bool enabled = true,
       }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,19 +451,25 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
           controller: _controllers[field],
           maxLines: maxLines,
           keyboardType: keyboardType,
-          style: const TextStyle(color: Color(0xFFE8EEF7), fontSize: 14),
+          enabled: enabled,
+          style: TextStyle(
+            color: enabled ? const Color(0xFFE8EEF7) : const Color(0xFFE8EEF7).withOpacity(0.5),
+            fontSize: 14,
+          ),
           decoration: InputDecoration(
-            hintText: hintText,
+            hintText: enabled ? hintText : 'Select caliber first...',
             hintStyle: TextStyle(color: const Color(0xFF9AA4B2).withOpacity(0.6)),
             filled: true,
-            fillColor: const Color(0xFF0B1020),
+            fillColor: enabled ? const Color(0xFF0B1020) : const Color(0xFF0B1020).withOpacity(0.5),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFF222838)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF222838)),
+              borderSide: BorderSide(
+                color: enabled ? const Color(0xFF222838) : const Color(0xFF222838).withOpacity(0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -324,6 +505,9 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
       String field,
       List<DropdownOption> options, {
         bool isRequired = false,
+        bool isLoading = false,
+        bool enabled = true,
+        Function(String?)? onChanged,
       }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,28 +525,58 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
           value: _dropdownValues[field],
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFF0B1020),
+            fillColor: enabled ? const Color(0xFF0B1020) : const Color(0xFF0B1020).withOpacity(0.5),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFF222838)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF222838)),
+              borderSide: BorderSide(
+                color: enabled ? const Color(0xFF222838) : const Color(0xFF222838).withOpacity(0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: Color(0xFF57B7FF)),
             ),
             contentPadding: const EdgeInsets.all(12),
+            suffixIcon: isLoading
+                ? const Padding(
+              padding: EdgeInsets.all(12),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Color(0xFF57B7FF),
+                ),
+              ),
+            )
+                : null,
           ),
           dropdownColor: const Color(0xFF151923),
-          style: const TextStyle(color: Color(0xFFE8EEF7), fontSize: 14),
-          items: [
+          style: TextStyle(
+            color: enabled ? const Color(0xFFE8EEF7) : const Color(0xFFE8EEF7).withOpacity(0.5),
+            fontSize: 14,
+          ),
+          items: !enabled
+              ? [
             DropdownMenuItem<String>(
               value: null,
               child: Text(
-                'Select ${label.replaceAll('*', '').trim().toLowerCase()}...',
+                'Select brand first...',
+                style: TextStyle(color: const Color(0xFF9AA4B2).withOpacity(0.6)),
+              ),
+            ),
+          ]
+              : [
+            DropdownMenuItem<String>(
+              value: null,
+              child: Text(
+                isLoading
+                    ? 'Loading options...'
+                    : 'Select ${label.replaceAll('*', '').trim().toLowerCase()}...',
                 style: TextStyle(color: const Color(0xFF9AA4B2).withOpacity(0.6)),
               ),
             ),
@@ -371,8 +585,13 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
               child: Text(option.label),
             )),
           ],
-          onChanged: (value) {
+          onChanged: !enabled || isLoading
+              ? null
+              : (value) {
             setState(() => _dropdownValues[field] = value);
+            if (onChanged != null) {
+              onChanged(value);
+            }
           },
           validator: isRequired
               ? (value) {
@@ -444,11 +663,27 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
   void _saveAmmunition() {
     if (!_formKey.currentState!.validate()) return;
 
+    // Get bullet description from either dropdown selection or manual entry
+    String bulletDescription = _controllers['bullet']?.text.trim() ?? '';
+    if (bulletDescription.isEmpty && _dropdownValues['bulletType'] != null) {
+      bulletDescription = _dropdownValues['bulletType']!;
+    }
+
+    if (bulletDescription.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please specify bullet weight and type'),
+          backgroundColor: Color(0xFFFF6B6B),
+        ),
+      );
+      return;
+    }
+
     final ammunition = ArmoryAmmunition(
       brand: _dropdownValues['brand']!,
       line: _controllers['line']?.text.trim(),
       caliber: _dropdownValues['caliber']!,
-      bullet: _controllers['bullet']?.text.trim() ?? '',
+      bullet: bulletDescription,
       quantity: int.tryParse(_controllers['quantity']?.text.trim() ?? '0') ?? 0,
       status: _dropdownValues['status']!,
       lot: _controllers['lot']?.text.trim(),
