@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/armory_gear.dart';
 
-// lib/user_dashboard/presentation/widgets/gear_item_card.dart
+// lib/user_dashboard/presentation/widgets/gear_item_card.dart (Also fix potential overflow)
 class GearItemCard extends StatelessWidget {
   final ArmoryGear gear;
 
@@ -31,8 +31,11 @@ class GearItemCard extends StatelessWidget {
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -46,6 +49,7 @@ class GearItemCard extends StatelessWidget {
                     color: Color(0xFF9AA4B2),
                     fontSize: 11,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -53,6 +57,7 @@ class GearItemCard extends StatelessWidget {
           const SizedBox(height: 4),
           Wrap(
             spacing: 10,
+            runSpacing: 4,
             children: [
               if (gear.serial?.isNotEmpty == true)
                 Text(

@@ -1,15 +1,15 @@
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/gear_tab_widget.dart (Overflow Fix)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_gear.dart';
 import '../bloc/armory_bloc.dart';
+import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
 import 'add_gear_dialog.dart';
 import 'armory_card.dart';
 import 'empty_state_widget.dart';
 import 'gear_item_card.dart';
-// lib/user_dashboard/presentation/widgets/gear_tab_widget.dart
-// lib/user_dashboard/presentation/widgets/gear_tab_widget.dart (Fixed)
+
 class GearTabWidget extends StatelessWidget {
   final String userId;
 
@@ -99,26 +99,45 @@ class GearTabWidget extends StatelessWidget {
         childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
         iconColor: const Color(0xFF9AA4B2),
         collapsedIconColor: const Color(0xFF9AA4B2),
-        title: Row(
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFFE8EEF7),
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate available width for text (accounting for expansion icon)
+            final availableWidth = constraints.maxWidth - 40; // 40px for expansion icon
+
+            return SizedBox(
+              width: availableWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFFE8EEF7),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  if (subtitle.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Color(0xFF9AA4B2),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                color: Color(0xFF9AA4B2),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+            );
+          },
         ),
         children: items.isEmpty
             ? [
@@ -148,3 +167,4 @@ class GearTabWidget extends StatelessWidget {
     );
   }
 }
+
