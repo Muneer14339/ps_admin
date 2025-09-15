@@ -1,4 +1,4 @@
-// lib/user_dashboard/presentation/widgets/report_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/report_tab_widget.dart (Overflow Fix)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_firearm.dart';
@@ -65,61 +65,58 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
           setState(() => _loadouts = state.loadouts);
         }
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF151923),
-          border: Border.all(color: const Color(0xFF222838)),
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.35),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildReportHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _buildReportSection(
-                      'firearms',
-                      'Firearms',
-                      _firearms.length,
-                      _buildFirearmsTable(),
-                    ),
-                    _buildReportSection(
-                      'ammunition',
-                      'Ammunition',
-                      _ammunition.length,
-                      _buildAmmunitionTable(),
-                    ),
-                    _buildReportSection(
-                      'gear',
-                      'Gear & Accessories',
-                      _gear.length,
-                      _buildGearTable(),
-                    ),
-                    _buildReportSection(
-                      'tools',
-                      'Tools & Equipment',
-                      _tools.length,
-                      _buildToolsTable(),
-                    ),
-                    _buildReportSection(
-                      'loadouts',
-                      'Loadouts',
-                      _loadouts.length,
-                      _buildLoadoutsTable(),
-                    ),
-                  ],
-                ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFF151923),
+            border: Border.all(color: const Color(0xFF222838)),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.35),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildReportHeader(),
+              _buildReportSection(
+                'firearms',
+                'Firearms',
+                _firearms.length,
+                _buildFirearmsTable(),
+              ),
+              _buildReportSection(
+                'ammunition',
+                'Ammunition',
+                _ammunition.length,
+                _buildAmmunitionTable(),
+              ),
+              _buildReportSection(
+                'gear',
+                'Gear & Accessories',
+                _gear.length,
+                _buildGearTable(),
+              ),
+              _buildReportSection(
+                'tools',
+                'Tools & Equipment',
+                _tools.length,
+                _buildToolsTable(),
+              ),
+              _buildReportSection(
+                'loadouts',
+                'Loadouts',
+                _loadouts.length,
+                _buildLoadoutsTable(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -127,6 +124,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
 
   Widget _buildReportHeader() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFF222838))),
@@ -134,74 +132,136 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Inventory Report',
-                    style: TextStyle(
-                      color: Color(0xFFE8EEF7),
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
+          // Title and Print Button Row
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final showColumnLayout = constraints.maxWidth < 600;
+
+              if (showColumnLayout) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Inventory Report',
+                      style: TextStyle(
+                        color: Color(0xFFE8EEF7),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 15),
-                  Wrap(
-                    spacing: 20,
-                    runSpacing: 10,
-                    children: [
-                      _buildSummaryStatistic('${_firearms.length}', 'Firearms'),
-                      _buildSummaryStatistic('${_ammunition.length}', 'Ammo Lots'),
-                      _buildSummaryStatistic('${_gear.length}', 'Gear Items'),
-                      _buildSummaryStatistic('${_tools.length}', 'Tools'),
-                      _buildSummaryStatistic('${_loadouts.length}', 'Loadouts'),
-                    ],
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: _printReport,
-                icon: const Icon(Icons.print, size: 16),
-                label: const Text('Print Report'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B2130),
-                  foregroundColor: const Color(0xFFE8EEF7),
-                  side: const BorderSide(color: Color(0xFF222838)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
+                    const SizedBox(height: 15),
+                    _buildSummaryStatistics(),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _printReport,
+                        icon: const Icon(Icons.print, size: 16),
+                        label: const Text('Print Report'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B2130),
+                          foregroundColor: const Color(0xFFE8EEF7),
+                          side: const BorderSide(color: Color(0xFF222838)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Inventory Report',
+                            style: TextStyle(
+                              color: Color(0xFFE8EEF7),
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          _buildSummaryStatistics(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    ElevatedButton.icon(
+                      onPressed: _printReport,
+                      icon: const Icon(Icons.print, size: 16),
+                      label: const Text('Print Report'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B2130),
+                        foregroundColor: const Color(0xFFE8EEF7),
+                        side: const BorderSide(color: Color(0xFF222838)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            },
           ),
         ],
       ),
     );
   }
 
+  Widget _buildSummaryStatistics() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemsPerRow = constraints.maxWidth < 400 ? 2 :
+        constraints.maxWidth < 600 ? 3 : 5;
+
+        final statistics = [
+          _buildSummaryStatistic('${_firearms.length}', 'Firearms'),
+          _buildSummaryStatistic('${_ammunition.length}', 'Ammo Lots'),
+          _buildSummaryStatistic('${_gear.length}', 'Gear Items'),
+          _buildSummaryStatistic('${_tools.length}', 'Tools'),
+          _buildSummaryStatistic('${_loadouts.length}', 'Loadouts'),
+        ];
+
+        return Wrap(
+          spacing: 15,
+          runSpacing: 10,
+          children: statistics,
+        );
+      },
+    );
+  }
+
   Widget _buildSummaryStatistic(String number, String label) {
-    return Column(
-      children: [
-        Text(
-          number,
-          style: const TextStyle(
-            color: Color(0xFF57B7FF),
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+    return Container(
+      constraints: const BoxConstraints(minWidth: 80),
+      child: Column(
+        children: [
+          Text(
+            number,
+            style: const TextStyle(
+              color: Color(0xFF57B7FF),
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF9AA4B2),
-            fontSize: 12,
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF9AA4B2),
+              fontSize: 12,
+            ),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -209,6 +269,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     final isExpanded = _expandedSections[key] ?? false;
 
     return Container(
+      width: double.infinity,
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFF222838))),
       ),
@@ -221,15 +282,18 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
               });
             },
             child: Container(
+              width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Color(0xFFE8EEF7),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Color(0xFFE8EEF7),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -248,7 +312,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 12),
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
@@ -264,6 +328,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
           ),
           if (isExpanded)
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
               child: content,
             ),
@@ -284,47 +349,57 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     }
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF222838)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
-          dataRowMaxHeight: 50,
-          columnSpacing: 20,
-          headingTextStyle: const TextStyle(
-            color: Color(0xFFCFE0FF),
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-          ),
-          dataTextStyle: const TextStyle(
-            color: Color(0xFFE8EEF7),
-            fontSize: 13,
-          ),
-          columns: const [
-            DataColumn(label: Text('Make')),
-            DataColumn(label: Text('Model')),
-            DataColumn(label: Text('Caliber')),
-            DataColumn(label: Text('Type')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Serial')),
-            DataColumn(label: Text('Nickname')),
-          ],
-          rows: _firearms.map((firearm) {
-            return DataRow(
-              cells: [
-                DataCell(Text(firearm.make)),
-                DataCell(Text(firearm.model)),
-                DataCell(Text(firearm.caliber)),
-                DataCell(Text(firearm.type)),
-                DataCell(_buildStatusChip(firearm.status)),
-                DataCell(Text(firearm.serial ?? '')),
-                DataCell(Text(firearm.nickname)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 72, // Account for padding
+            ),
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
+              dataRowMaxHeight: 50,
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              headingTextStyle: const TextStyle(
+                color: Color(0xFFCFE0FF),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              dataTextStyle: const TextStyle(
+                color: Color(0xFFE8EEF7),
+                fontSize: 12,
+              ),
+              columns: const [
+                DataColumn(label: Text('Make')),
+                DataColumn(label: Text('Model')),
+                DataColumn(label: Text('Caliber')),
+                DataColumn(label: Text('Type')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Serial')),
+                DataColumn(label: Text('Nickname')),
               ],
-            );
-          }).toList(),
+              rows: _firearms.map((firearm) {
+                return DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 60, child: Text(firearm.make, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(firearm.model, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 70, child: Text(firearm.caliber, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 60, child: Text(firearm.type, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: _buildStatusChip(firearm.status))),
+                    DataCell(SizedBox(width: 70, child: Text(firearm.serial ?? '', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(firearm.nickname, overflow: TextOverflow.ellipsis))),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ),
     );
@@ -342,47 +417,57 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     }
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF222838)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
-          dataRowMaxHeight: 50,
-          columnSpacing: 20,
-          headingTextStyle: const TextStyle(
-            color: Color(0xFFCFE0FF),
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-          ),
-          dataTextStyle: const TextStyle(
-            color: Color(0xFFE8EEF7),
-            fontSize: 13,
-          ),
-          columns: const [
-            DataColumn(label: Text('Brand')),
-            DataColumn(label: Text('Line')),
-            DataColumn(label: Text('Caliber')),
-            DataColumn(label: Text('Bullet')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Quantity')),
-            DataColumn(label: Text('Lot')),
-          ],
-          rows: _ammunition.map((ammo) {
-            return DataRow(
-              cells: [
-                DataCell(Text(ammo.brand)),
-                DataCell(Text(ammo.line ?? '')),
-                DataCell(Text(ammo.caliber)),
-                DataCell(Text(ammo.bullet)),
-                DataCell(_buildStatusChip(ammo.status)),
-                DataCell(Text('${ammo.quantity}')),
-                DataCell(Text(ammo.lot ?? '')),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 72,
+            ),
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
+              dataRowMaxHeight: 50,
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              headingTextStyle: const TextStyle(
+                color: Color(0xFFCFE0FF),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              dataTextStyle: const TextStyle(
+                color: Color(0xFFE8EEF7),
+                fontSize: 12,
+              ),
+              columns: const [
+                DataColumn(label: Text('Brand')),
+                DataColumn(label: Text('Line')),
+                DataColumn(label: Text('Caliber')),
+                DataColumn(label: Text('Bullet')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Quantity')),
+                DataColumn(label: Text('Lot')),
               ],
-            );
-          }).toList(),
+              rows: _ammunition.map((ammo) {
+                return DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 70, child: Text(ammo.brand, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 70, child: Text(ammo.line ?? '', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 70, child: Text(ammo.caliber, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(ammo.bullet, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: _buildStatusChip(ammo.status))),
+                    DataCell(SizedBox(width: 60, child: Text('${ammo.quantity}', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 60, child: Text(ammo.lot ?? '', overflow: TextOverflow.ellipsis))),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ),
     );
@@ -400,43 +485,53 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     }
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF222838)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
-          dataRowMaxHeight: 50,
-          columnSpacing: 20,
-          headingTextStyle: const TextStyle(
-            color: Color(0xFFCFE0FF),
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-          ),
-          dataTextStyle: const TextStyle(
-            color: Color(0xFFE8EEF7),
-            fontSize: 13,
-          ),
-          columns: const [
-            DataColumn(label: Text('Category')),
-            DataColumn(label: Text('Model')),
-            DataColumn(label: Text('Serial')),
-            DataColumn(label: Text('Qty')),
-            DataColumn(label: Text('Notes')),
-          ],
-          rows: _gear.map((gear) {
-            return DataRow(
-              cells: [
-                DataCell(Text(gear.category)),
-                DataCell(Text(gear.model)),
-                DataCell(Text(gear.serial ?? '')),
-                DataCell(Text('${gear.quantity}')),
-                DataCell(Text(gear.notes ?? '')),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 72,
+            ),
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
+              dataRowMaxHeight: 50,
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              headingTextStyle: const TextStyle(
+                color: Color(0xFFCFE0FF),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              dataTextStyle: const TextStyle(
+                color: Color(0xFFE8EEF7),
+                fontSize: 12,
+              ),
+              columns: const [
+                DataColumn(label: Text('Category')),
+                DataColumn(label: Text('Model')),
+                DataColumn(label: Text('Serial')),
+                DataColumn(label: Text('Qty')),
+                DataColumn(label: Text('Notes')),
               ],
-            );
-          }).toList(),
+              rows: _gear.map((gear) {
+                return DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 80, child: Text(gear.category, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 120, child: Text(gear.model, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(gear.serial ?? '', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 40, child: Text('${gear.quantity}'))),
+                    DataCell(SizedBox(width: 100, child: Text(gear.notes ?? '', overflow: TextOverflow.ellipsis))),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ),
     );
@@ -454,41 +549,51 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     }
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF222838)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
-          dataRowMaxHeight: 50,
-          columnSpacing: 20,
-          headingTextStyle: const TextStyle(
-            color: Color(0xFFCFE0FF),
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-          ),
-          dataTextStyle: const TextStyle(
-            color: Color(0xFFE8EEF7),
-            fontSize: 13,
-          ),
-          columns: const [
-            DataColumn(label: Text('Name')),
-            DataColumn(label: Text('Category')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Qty')),
-          ],
-          rows: _tools.map((tool) {
-            return DataRow(
-              cells: [
-                DataCell(Text(tool.name)),
-                DataCell(Text(tool.category ?? '')),
-                DataCell(_buildStatusChip(tool.status)),
-                DataCell(Text('${tool.quantity}')),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 72,
+            ),
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
+              dataRowMaxHeight: 50,
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              headingTextStyle: const TextStyle(
+                color: Color(0xFFCFE0FF),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              dataTextStyle: const TextStyle(
+                color: Color(0xFFE8EEF7),
+                fontSize: 12,
+              ),
+              columns: const [
+                DataColumn(label: Text('Name')),
+                DataColumn(label: Text('Category')),
+                DataColumn(label: Text('Status')),
+                DataColumn(label: Text('Qty')),
               ],
-            );
-          }).toList(),
+              rows: _tools.map((tool) {
+                return DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 120, child: Text(tool.name, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(tool.category ?? '', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: _buildStatusChip(tool.status))),
+                    DataCell(SizedBox(width: 40, child: Text('${tool.quantity}'))),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ),
     );
@@ -506,43 +611,53 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     }
 
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF222838)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
-          dataRowMaxHeight: 50,
-          columnSpacing: 20,
-          headingTextStyle: const TextStyle(
-            color: Color(0xFFCFE0FF),
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-          ),
-          dataTextStyle: const TextStyle(
-            color: Color(0xFFE8EEF7),
-            fontSize: 13,
-          ),
-          columns: const [
-            DataColumn(label: Text('Name')),
-            DataColumn(label: Text('Firearm')),
-            DataColumn(label: Text('Ammo')),
-            DataColumn(label: Text('Gear')),
-            DataColumn(label: Text('Notes')),
-          ],
-          rows: _loadouts.map((loadout) {
-            return DataRow(
-              cells: [
-                DataCell(Text(loadout.name)),
-                DataCell(Text(loadout.firearmId ?? '')),
-                DataCell(Text(loadout.ammunitionId ?? '')),
-                DataCell(Text('${loadout.gearIds.length} items')),
-                DataCell(Text(loadout.notes ?? '')),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width - 72,
+            ),
+            child: DataTable(
+              headingRowColor: MaterialStateProperty.all(const Color(0xFF101522)),
+              dataRowMaxHeight: 50,
+              columnSpacing: 12,
+              horizontalMargin: 12,
+              headingTextStyle: const TextStyle(
+                color: Color(0xFFCFE0FF),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              dataTextStyle: const TextStyle(
+                color: Color(0xFFE8EEF7),
+                fontSize: 12,
+              ),
+              columns: const [
+                DataColumn(label: Text('Name')),
+                DataColumn(label: Text('Firearm')),
+                DataColumn(label: Text('Ammo')),
+                DataColumn(label: Text('Gear')),
+                DataColumn(label: Text('Notes')),
               ],
-            );
-          }).toList(),
+              rows: _loadouts.map((loadout) {
+                return DataRow(
+                  cells: [
+                    DataCell(SizedBox(width: 100, child: Text(loadout.name, overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(loadout.firearmId ?? '', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 80, child: Text(loadout.ammunitionId ?? '', overflow: TextOverflow.ellipsis))),
+                    DataCell(SizedBox(width: 60, child: Text('${loadout.gearIds.length} items'))),
+                    DataCell(SizedBox(width: 100, child: Text(loadout.notes ?? '', overflow: TextOverflow.ellipsis))),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
         ),
       ),
     );
@@ -577,20 +692,19 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
         status,
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
   void _printReport() {
-    // Expand all sections for printing
     setState(() {
       _expandedSections.updateAll((key, value) => true);
     });
 
-    // Show print dialog or share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Print functionality would be implemented here'),
