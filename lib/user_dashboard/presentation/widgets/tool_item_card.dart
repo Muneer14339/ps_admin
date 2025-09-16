@@ -1,7 +1,9 @@
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/tool_item_card.dart
 import 'package:flutter/material.dart';
 import '../../domain/entities/armory_tool.dart';
-// lib/user_dashboard/presentation/widgets/tool_item_card.dart
+import '../core/theme/app_theme.dart';
+import 'common/common_widgets.dart';
+
 class ToolItemCard extends StatelessWidget {
   final ArmoryTool tool;
 
@@ -10,49 +12,39 @@ class ToolItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 14),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1220),
-        border: Border.all(color: const Color(0xFF222838)),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      margin: AppSizes.itemMargin,
+      padding: AppSizes.itemPadding,
+      decoration: AppDecorations.itemCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             tool.name,
-            style: const TextStyle(
-              color: Color(0xFFE8EEF7),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
+            style: AppTextStyles.itemTitle,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSizes.smallSpacing),
           Wrap(
             spacing: 10,
+            runSpacing: AppSizes.smallSpacing,
             children: [
               Text(
                 'Qty: ${tool.quantity}',
-                style: const TextStyle(
-                  color: Color(0xFF9AA4B2),
-                  fontSize: 12,
-                ),
+                style: AppTextStyles.itemSubtitle,
               ),
               if (tool.category?.isNotEmpty == true)
                 Text(
                   'Category: ${tool.category}',
-                  style: const TextStyle(
-                    color: Color(0xFF9AA4B2),
-                    fontSize: 12,
-                  ),
+                  style: AppTextStyles.itemSubtitle,
                 ),
+              CommonWidgets.buildStatusChip(tool.status),
               if (tool.notes?.isNotEmpty == true)
-                Text(
-                  tool.notes!,
-                  style: const TextStyle(
-                    color: Color(0xFF9AA4B2),
-                    fontSize: 12,
+                Flexible(
+                  child: Text(
+                    tool.notes!,
+                    style: AppTextStyles.itemSubtitle,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
                 ),
             ],

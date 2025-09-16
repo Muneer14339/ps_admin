@@ -1,9 +1,9 @@
 // lib/user_dashboard/presentation/widgets/armory_tab_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_event.dart';
+import '../core/theme/app_theme.dart';
 import 'ammunition_tab_widget.dart';
 import 'firearms_tab_widget.dart';
 import 'gear_tab_widget.dart';
@@ -53,7 +53,6 @@ class _ArmoryTabViewState extends State<ArmoryTabView> {
         bloc.add(LoadLoadoutsEvent(userId: widget.userId));
         break;
       case ArmoryTabType.report:
-      // Load all data for report
         bloc.add(LoadFirearmsEvent(userId: widget.userId));
         bloc.add(LoadAmmunitionEvent(userId: widget.userId));
         bloc.add(LoadGearEvent(userId: widget.userId));
@@ -66,9 +65,9 @@ class _ArmoryTabViewState extends State<ArmoryTabView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF0F1115),
+      decoration: AppDecorations.pageDecoration,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppSizes.pageMargin,
         child: _buildTabContent(),
       ),
     );

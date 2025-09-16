@@ -1,13 +1,15 @@
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/loadouts_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_state.dart';
+import '../core/theme/app_theme.dart';
 import 'add_loadout_dialog.dart';
 import 'armory_card.dart';
+import 'common/common_widgets.dart';
 import 'empty_state_widget.dart';
 import 'loadout_item_card.dart';
-// lib/user_dashboard/presentation/widgets/loadouts_tab_widget.dart (Fixed)
+
 class LoadoutsTabWidget extends StatelessWidget {
   final String userId;
 
@@ -21,14 +23,14 @@ class LoadoutsTabWidget extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFF51CF66),
+              backgroundColor: AppColors.successColor,
             ),
           );
         } else if (state is ArmoryError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFFFF6B6B),
+              backgroundColor: AppColors.errorColor,
             ),
           );
         }
@@ -39,6 +41,7 @@ class LoadoutsTabWidget extends StatelessWidget {
           description: 'Create named bundles of your gear to speed up Training setup.',
           onAddPressed: () => _showAddLoadoutDialog(context),
           itemCount: state is LoadoutsLoaded ? state.loadouts.length : null,
+          isLoading: state is ArmoryLoadingAction,
           child: _buildLoadoutsList(state),
         );
       },
@@ -47,17 +50,15 @@ class LoadoutsTabWidget extends StatelessWidget {
 
   Widget _buildLoadoutsList(ArmoryState state) {
     if (state is ArmoryLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: Color(0xFF57B7FF)),
-        ),
-      );
+      return CommonWidgets.buildLoading(message: 'Loading loadouts...');
     }
 
     if (state is LoadoutsLoaded) {
       if (state.loadouts.isEmpty) {
-        return const EmptyStateWidget(message: 'No loadouts yet.');
+        return const EmptyStateWidget(
+          message: 'No loadouts yet.',
+          icon: Icons.add_circle_outline,
+        );
       }
 
       return Column(
@@ -67,7 +68,14 @@ class LoadoutsTabWidget extends StatelessWidget {
       );
     }
 
-    return const EmptyStateWidget(message: 'No loadouts yet.');
+    if (state is ArmoryError) {
+      return CommonWidgets.buildError(state.message);
+    }
+
+    return const EmptyStateWidget(
+      message: 'No loadouts yet.',
+      icon: Icons.add_circle_outline,
+    );
   }
 
   void _showAddLoadoutDialog(BuildContext context) {

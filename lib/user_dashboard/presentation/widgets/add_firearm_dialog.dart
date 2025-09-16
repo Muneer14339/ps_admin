@@ -8,6 +8,8 @@ import '../../domain/usecases/get_dropdown_options_usecase.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
+import '../core/theme/app_theme.dart';
+import 'common/dialog_widgets.dart';
 
 class AddFirearmDialog extends StatefulWidget {
   final String userId;
@@ -24,7 +26,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
   final _dropdownValues = <String, String?>{};
   final _errors = <String, String?>{};
 
-  // Dropdown options lists
+  // Dropdown options
   List<DropdownOption> _firearmBrands = [];
   List<DropdownOption> _firearmModels = [];
   List<DropdownOption> _firearmGenerations = [];
@@ -32,7 +34,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
   List<DropdownOption> _firearmMechanisms = [];
   List<DropdownOption> _calibers = [];
 
-  // Loading states for individual dropdowns
+  // Loading states
   bool _loadingBrands = false;
   bool _loadingModels = false;
   bool _loadingGenerations = false;
@@ -48,29 +50,17 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
   }
 
   void _initializeControllers() {
-    final fields = [
-      'make', 'model', 'nickname', 'serial', 'notes',
-      'detailedType', 'purpose', 'condition', 'purchaseDate',
-      'purchasePrice', 'currentValue', 'fflDealer', 'manufacturerPN',
-      'finish', 'stockMaterial', 'triggerType', 'safetyType',
-      'feedSystem', 'magazineCapacity', 'twistRate', 'threadPattern',
-      'overallLength', 'weight', 'barrelLength', 'actionType',
-      'roundCount', 'lastCleaned', 'zeroDistance', 'modifications',
-      'accessoriesIncluded', 'storageLocation'
-    ];
+    final fields = ['make', 'model', 'nickname', 'serial', 'notes'];
 
     for (final field in fields) {
       _controllers[field] = TextEditingController();
     }
 
-    // Set default values
     _dropdownValues['status'] = 'available';
     _dropdownValues['condition'] = 'good';
-    _controllers['roundCount']?.text = '0';
   }
 
   void _loadInitialData() {
-    // Load initial static data
     setState(() {
       _loadingMakes = true;
       _loadingMechanisms = true;
@@ -94,17 +84,13 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _firearmBrands.clear();
       _firearmModels.clear();
       _firearmGenerations.clear();
-      // Clear dependent dropdown values
       _dropdownValues['brand'] = null;
       _dropdownValues['model'] = null;
       _dropdownValues['generation'] = null;
     });
 
     context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.firearmBrands,
-        filterValue: type, // Filter brands by firearm type
-      ),
+      LoadDropdownOptionsEvent(type: DropdownType.firearmBrands, filterValue: type),
     );
   }
 
@@ -113,16 +99,12 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _loadingModels = true;
       _firearmModels.clear();
       _firearmGenerations.clear();
-      // Clear dependent dropdown values
       _dropdownValues['model'] = null;
       _dropdownValues['generation'] = null;
     });
 
     context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.firearmModels,
-        filterValue: brand,
-      ),
+      LoadDropdownOptionsEvent(type: DropdownType.firearmModels, filterValue: brand),
     );
   }
 
@@ -158,29 +140,33 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
           Navigator.of(context).pop();
         }
       },
-      child: Dialog(
-        backgroundColor: const Color(0xFF151923),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.9,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(),
-              Flexible(child: _buildForm()),
-              _buildActions(),
-            ],
-          ),
+      child: CommonDialogWidgets.buildDialogWrapper(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CommonDialogWidgets.buildHeader(
+              title: 'Add Firearm',
+              badge: 'Level 1 UI',
+              onClose: () => Navigator.of(context).pop(),
+            ),
+            Flexible(child: _buildForm()),
+            BlocBuilder<ArmoryBloc, ArmoryState>(
+              builder: (context, state) {
+                return CommonDialogWidgets.buildActions(
+                  onCancel: () => Navigator.of(context).pop(),
+                  onSave: _saveFirearm,
+                  saveButtonText: 'Save Firearm',
+                  isLoading: state is ArmoryLoadingAction,
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
   void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
-    // Determine which dropdown was loaded based on current loading states
     if (_loadingMakes) {
       setState(() {
         _firearmMakes = options;
@@ -214,474 +200,134 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     }
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF222838))),
-      ),
-      child: Row(
-        children: [
-          const Text(
-            'Add Firearm',
-            style: TextStyle(
-              color: Color(0xFFE8EEF7),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF57B7FF).withOpacity(0.1),
-              border: Border.all(color: const Color(0xFF57B7FF).withOpacity(0.2)),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text(
-              'Cascading Dropdowns',
-              style: TextStyle(
-                color: Color(0xFF57B7FF),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close, color: Color(0xFFE8EEF7)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.dialogPadding),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Step 1: Firearm Type (triggers brand loading)
-            _buildDropdownField(
-              'Firearm Type *',
-              'type',
-              [
+            CommonDialogWidgets.buildDropdownField(
+              label: 'Firearm Type *',
+              value: _dropdownValues['type'],
+              options: [
                 const DropdownOption(value: 'rifle', label: 'Rifle'),
                 const DropdownOption(value: 'pistol', label: 'Pistol'),
                 const DropdownOption(value: 'revolver', label: 'Revolver'),
                 const DropdownOption(value: 'shotgun', label: 'Shotgun'),
               ],
-              isRequired: true,
               onChanged: (value) {
-                if (value != null) {
-                  _loadBrandsForType(value);
-                }
+                setState(() => _dropdownValues['type'] = value);
+                if (value != null) _loadBrandsForType(value);
               },
+              isRequired: true,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            // Step 2: Brand (shows after type is selected)
-            _buildDropdownField(
-              'Brand *',
-              'brand',
-              _firearmBrands,
+            CommonDialogWidgets.buildDropdownField(
+              label: 'Brand *',
+              value: _dropdownValues['brand'],
+              options: _firearmBrands,
+              onChanged: (value) {
+                setState(() => _dropdownValues['brand'] = value);
+                if (value != null) _loadModelsForBrand(value);
+              },
               isRequired: true,
               isLoading: _loadingBrands,
               enabled: _dropdownValues['type'] != null,
-              onChanged: (value) {
-                if (value != null) {
-                  _loadModelsForBrand(value);
-                }
-              },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            // Step 3: Model (shows after brand is selected)
-            _buildDropdownField(
-              'Model *',
-              'model',
-              _firearmModels,
-              isRequired: true,
-              isLoading: _loadingModels,
-              enabled: _dropdownValues['brand'] != null,
+            CommonDialogWidgets.buildDropdownField(
+              label: 'Model *',
+              value: _dropdownValues['model'],
+              options: _firearmModels,
               onChanged: (value) {
+                setState(() => _dropdownValues['model'] = value);
                 if (value != null && _dropdownValues['brand'] != null) {
                   _loadGenerationsForBrandModel(_dropdownValues['brand']!, value);
                 }
               },
+              isRequired: true,
+              isLoading: _loadingModels,
+              enabled: _dropdownValues['brand'] != null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            // Step 4: Generation (shows after model is selected)
-            _buildDropdownField(
-              'Generation',
-              'generation',
-              _firearmGenerations,
+            CommonDialogWidgets.buildDropdownField(
+              label: 'Generation',
+              value: _dropdownValues['generation'],
+              options: _firearmGenerations,
+              onChanged: (value) => setState(() => _dropdownValues['generation'] = value),
               isLoading: _loadingGenerations,
               enabled: _dropdownValues['model'] != null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            // Other fields in responsive layout
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isTablet = constraints.maxWidth > 520;
-                if (isTablet) {
-                  return Row(
-                    children: [
-                      Expanded(child: _buildDropdownField('Make *', 'make', _firearmMakes, isRequired: true, isLoading: _loadingMakes)),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildDropdownField('Caliber *', 'caliber', _calibers, isRequired: true, isLoading: _loadingCalibers)),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _buildDropdownField('Make *', 'make', _firearmMakes, isRequired: true, isLoading: _loadingMakes),
-                      const SizedBox(height: 16),
-                      _buildDropdownField('Caliber *', 'caliber', _calibers, isRequired: true, isLoading: _loadingCalibers),
-                    ],
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 16),
+            CommonDialogWidgets.buildResponsiveRow([
+              CommonDialogWidgets.buildDropdownField(
+                label: 'Make *',
+                value: _dropdownValues['make'],
+                options: _firearmMakes,
+                onChanged: (value) => setState(() => _dropdownValues['make'] = value),
+                isRequired: true,
+                isLoading: _loadingMakes,
+              ),
+              CommonDialogWidgets.buildDropdownField(
+                label: 'Caliber *',
+                value: _dropdownValues['caliber'],
+                options: _calibers,
+                onChanged: (value) => setState(() => _dropdownValues['caliber'] = value),
+                isRequired: true,
+                isLoading: _loadingCalibers,
+              ),
+            ]),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isTablet = constraints.maxWidth > 520;
-                if (isTablet) {
-                  return Row(
-                    children: [
-                      Expanded(child: _buildTextField('Nickname/Identifier *', 'nickname', isRequired: true)),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildDropdownField('Firing Mechanism', 'firingMechanism', _firearmMechanisms, isLoading: _loadingMechanisms)),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _buildTextField('Nickname/Identifier *', 'nickname', isRequired: true),
-                      const SizedBox(height: 16),
-                      _buildDropdownField('Firing Mechanism', 'firingMechanism', _firearmMechanisms, isLoading: _loadingMechanisms),
-                    ],
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 16),
+            CommonDialogWidgets.buildResponsiveRow([
+              CommonDialogWidgets.buildTextField(
+                label: 'Nickname/Identifier *',
+                controller: _controllers['nickname']!,
+                isRequired: true,
+              ),
+              CommonDialogWidgets.buildDropdownField(
+                label: 'Firing Mechanism',
+                value: _dropdownValues['firingMechanism'],
+                options: _firearmMechanisms,
+                onChanged: (value) => setState(() => _dropdownValues['firingMechanism'] = value),
+                isLoading: _loadingMechanisms,
+              ),
+            ]),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isTablet = constraints.maxWidth > 520;
-                if (isTablet) {
-                  return Row(
-                    children: [
-                      Expanded(child: _buildDropdownField(
-                        'Status *',
-                        'status',
-                        [
-                          const DropdownOption(value: 'available', label: 'Available'),
-                          const DropdownOption(value: 'in-use', label: 'In Use'),
-                          const DropdownOption(value: 'maintenance', label: 'Maintenance'),
-                        ],
-                        isRequired: true,
-                      )),
-                      const SizedBox(width: 10),
-                      Expanded(child: _buildTextField('Serial Number', 'serial')),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _buildDropdownField(
-                        'Status *',
-                        'status',
-                        [
-                          const DropdownOption(value: 'available', label: 'Available'),
-                          const DropdownOption(value: 'in-use', label: 'In Use'),
-                          const DropdownOption(value: 'maintenance', label: 'Maintenance'),
-                        ],
-                        isRequired: true,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildTextField('Serial Number', 'serial'),
-                    ],
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 16),
+            CommonDialogWidgets.buildResponsiveRow([
+              CommonDialogWidgets.buildDropdownField(
+                label: 'Status *',
+                value: _dropdownValues['status'],
+                options: [
+                  const DropdownOption(value: 'available', label: 'Available'),
+                  const DropdownOption(value: 'in-use', label: 'In Use'),
+                  const DropdownOption(value: 'maintenance', label: 'Maintenance'),
+                ],
+                onChanged: (value) => setState(() => _dropdownValues['status'] = value),
+                isRequired: true,
+              ),
+              CommonDialogWidgets.buildTextField(
+                label: 'Serial Number',
+                controller: _controllers['serial']!,
+              ),
+            ]),
+            const SizedBox(height: AppSizes.fieldSpacing),
 
-            _buildTextField(
-              'Notes',
-              'notes',
+            CommonDialogWidgets.buildTextField(
+              label: 'Notes',
+              controller: _controllers['notes']!,
               maxLines: 3,
               hintText: 'Purpose, setup, special considerations, etc.',
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-      String label,
-      String field, {
-        bool isRequired = false,
-        int maxLines = 1,
-        String? hintText,
-        TextInputType keyboardType = TextInputType.text,
-      }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF9AA4B2),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: _controllers[field],
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          style: const TextStyle(color: Color(0xFFE8EEF7), fontSize: 14),
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: TextStyle(color: const Color(0xFF9AA4B2).withOpacity(0.6)),
-            filled: true,
-            fillColor: const Color(0xFF0B1020),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF222838)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF222838)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF57B7FF)),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
-            ),
-            contentPadding: const EdgeInsets.all(12),
-          ),
-          validator: isRequired
-              ? (value) {
-            if (value == null || value.trim().isEmpty) {
-              return '${label.replaceAll('*', '').trim()} is required';
-            }
-            return null;
-          }
-              : null,
-          onChanged: (value) {
-            if (_errors[field] != null) {
-              setState(() => _errors[field] = null);
-            }
-          },
-        ),
-        if (_errors[field] != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              _errors[field]!,
-              style: const TextStyle(
-                color: Color(0xFFFF6B6B),
-                fontSize: 12,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildDropdownField(
-      String label,
-      String field,
-      List<DropdownOption> options, {
-        bool isRequired = false,
-        bool isLoading = false,
-        bool enabled = true,
-        Function(String?)? onChanged,
-      }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF9AA4B2),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          value: _dropdownValues[field],
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: enabled ? const Color(0xFF0B1020) : const Color(0xFF0B1020).withOpacity(0.5),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF222838)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: enabled ? const Color(0xFF222838) : const Color(0xFF222838).withOpacity(0.5),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF57B7FF)),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFFFF6B6B)),
-            ),
-            contentPadding: const EdgeInsets.all(12),
-            suffixIcon: isLoading
-                ? const Padding(
-              padding: EdgeInsets.all(12),
-              child: SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Color(0xFF57B7FF),
-                ),
-              ),
-            )
-                : null,
-          ),
-          dropdownColor: const Color(0xFF151923),
-          style: TextStyle(
-            color: enabled ? const Color(0xFFE8EEF7) : const Color(0xFFE8EEF7).withOpacity(0.5),
-            fontSize: 14,
-          ),
-          items: !enabled
-              ? [
-            DropdownMenuItem<String>(
-              value: null,
-              child: Text(
-                'Select ${label.split('*')[0].trim().split(' ').first.toLowerCase()} first...',
-                style: TextStyle(color: const Color(0xFF9AA4B2).withOpacity(0.6)),
-              ),
-            ),
-          ]
-              : [
-            DropdownMenuItem<String>(
-              value: null,
-              child: Text(
-                isLoading
-                    ? 'Loading...'
-                    : 'Select ${label.replaceAll('*', '').trim().toLowerCase()}...',
-                style: TextStyle(color: const Color(0xFF9AA4B2).withOpacity(0.6)),
-              ),
-            ),
-            ...options.map((option) => DropdownMenuItem<String>(
-              value: option.value,
-              child: Text(option.label),
-            )),
-          ],
-          onChanged: !enabled || isLoading
-              ? null
-              : (value) {
-            setState(() {
-              _dropdownValues[field] = value;
-              if (_errors[field] != null) {
-                _errors[field] = null;
-              }
-            });
-            if (onChanged != null) {
-              onChanged(value);
-            }
-          },
-          validator: isRequired
-              ? (value) {
-            if (value == null || value.isEmpty) {
-              return '${label.replaceAll('*', '').trim()} is required';
-            }
-            return null;
-          }
-              : null,
-        ),
-        if (_errors[field] != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              _errors[field]!,
-              style: const TextStyle(
-                color: Color(0xFFFF6B6B),
-                fontSize: 12,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildActions() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFF222838))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Color(0xFF9AA4B2)),
-            ),
-          ),
-          const SizedBox(width: 8),
-          BlocBuilder<ArmoryBloc, ArmoryState>(
-            builder: (context, state) {
-              final isLoading = state is ArmoryLoadingAction;
-              return ElevatedButton(
-                onPressed: isLoading ? null : _saveFirearm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2A3BFF).withOpacity(0.15),
-                  foregroundColor: const Color(0xFFDBE6FF),
-                  side: BorderSide(
-                    color: const Color(0xFF3050FF).withOpacity(0.35),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFFDBE6FF),
-                  ),
-                )
-                    : const Text('Save Firearm'),
-              );
-            },
-          ),
-        ],
       ),
     );
   }
@@ -693,37 +339,22 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     bool hasErrors = false;
 
     // Check required dropdowns
-    if (_dropdownValues['type'] == null) {
-      setState(() => _errors['type'] = 'Firearm type is required');
-      hasErrors = true;
-    }
+    final requiredDropdowns = {
+      'type': 'Firearm type is required',
+      'brand': 'Brand is required',
+      'model': 'Model is required',
+      'make': 'Make is required',
+      'caliber': 'Caliber is required',
+      'status': 'Status is required',
+    };
 
-    if (_dropdownValues['brand'] == null) {
-      setState(() => _errors['brand'] = 'Brand is required');
-      hasErrors = true;
-    }
+    requiredDropdowns.forEach((field, errorMessage) {
+      if (_dropdownValues[field] == null) {
+        setState(() => _errors[field] = errorMessage);
+        hasErrors = true;
+      }
+    });
 
-    if (_dropdownValues['model'] == null) {
-      setState(() => _errors['model'] = 'Model is required');
-      hasErrors = true;
-    }
-
-    if (_dropdownValues['make'] == null) {
-      setState(() => _errors['make'] = 'Make is required');
-      hasErrors = true;
-    }
-
-    if (_dropdownValues['caliber'] == null) {
-      setState(() => _errors['caliber'] = 'Caliber is required');
-      hasErrors = true;
-    }
-
-    if (_dropdownValues['status'] == null) {
-      setState(() => _errors['status'] = 'Status is required');
-      hasErrors = true;
-    }
-
-    // Check nickname uniqueness
     final nickname = _controllers['nickname']?.text.trim() ?? '';
     if (nickname.isEmpty) {
       setState(() => _errors['nickname'] = 'Nickname is required and must be unique');
@@ -744,34 +375,6 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       brand: _dropdownValues['brand'],
       generation: _dropdownValues['generation'],
       firingMechanism: _dropdownValues['firingMechanism'],
-      // Include all Level 3 fields with default values
-      detailedType: _controllers['detailedType']?.text.trim(),
-      purpose: _controllers['purpose']?.text.trim(),
-      condition: _dropdownValues['condition'] ?? 'good',
-      purchaseDate: _controllers['purchaseDate']?.text.trim(),
-      purchasePrice: _controllers['purchasePrice']?.text.trim(),
-      currentValue: _controllers['currentValue']?.text.trim(),
-      fflDealer: _controllers['fflDealer']?.text.trim(),
-      manufacturerPN: _controllers['manufacturerPN']?.text.trim(),
-      finish: _controllers['finish']?.text.trim(),
-      stockMaterial: _controllers['stockMaterial']?.text.trim(),
-      triggerType: _controllers['triggerType']?.text.trim(),
-      safetyType: _controllers['safetyType']?.text.trim(),
-      feedSystem: _controllers['feedSystem']?.text.trim(),
-      magazineCapacity: _controllers['magazineCapacity']?.text.trim(),
-      twistRate: _controllers['twistRate']?.text.trim(),
-      threadPattern: _controllers['threadPattern']?.text.trim(),
-      overallLength: _controllers['overallLength']?.text.trim(),
-      weight: _controllers['weight']?.text.trim(),
-      barrelLength: _controllers['barrelLength']?.text.trim(),
-      actionType: _controllers['actionType']?.text.trim(),
-      roundCount: int.tryParse(_controllers['roundCount']?.text.trim() ?? '0') ?? 0,
-      lastCleaned: _controllers['lastCleaned']?.text.trim(),
-      zeroDistance: _controllers['zeroDistance']?.text.trim(),
-      modifications: _controllers['modifications']?.text.trim(),
-      accessoriesIncluded: _controllers['accessoriesIncluded']?.text.trim(),
-      storageLocation: _controllers['storageLocation']?.text.trim(),
-      photos: const [],
       dateAdded: DateTime.now(),
     );
 

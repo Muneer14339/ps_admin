@@ -1,12 +1,13 @@
-// lib/user_dashboard/presentation/widgets/gear_tab_widget.dart (Overflow Fix)
+// lib/user_dashboard/presentation/widgets/gear_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_gear.dart';
 import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
+import '../core/theme/app_theme.dart';
 import 'add_gear_dialog.dart';
 import 'armory_card.dart';
+import 'common/common_widgets.dart';
 import 'empty_state_widget.dart';
 import 'gear_item_card.dart';
 
@@ -23,14 +24,14 @@ class GearTabWidget extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFF51CF66),
+              backgroundColor: AppColors.successColor,
             ),
           );
         } else if (state is ArmoryError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFFFF6B6B),
+              backgroundColor: AppColors.errorColor,
             ),
           );
         }
@@ -43,6 +44,7 @@ class GearTabWidget extends StatelessWidget {
               description: 'Optics, supports, sensors, attachments, and more — organized as collapsible sections.',
               onAddPressed: () => _showAddGearDialog(context),
               itemCount: state is GearLoaded ? state.gear.length : null,
+              isLoading: state is ArmoryLoadingAction,
               child: _buildGearAccordion(state),
             ),
           ],
@@ -53,12 +55,7 @@ class GearTabWidget extends StatelessWidget {
 
   Widget _buildGearAccordion(ArmoryState state) {
     if (state is ArmoryLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: Color(0xFF57B7FF)),
-        ),
-      );
+      return CommonWidgets.buildLoading(message: 'Loading gear...');
     }
 
     if (state is GearLoaded) {
@@ -71,7 +68,10 @@ class GearTabWidget extends StatelessWidget {
       }
 
       if (gearByCategory.isEmpty) {
-        return const EmptyStateWidget(message: 'No gear items yet.');
+        return const EmptyStateWidget(
+          message: 'No gear items yet.',
+          icon: Icons.add_circle_outline,
+        );
       }
 
       return Column(
@@ -85,75 +85,21 @@ class GearTabWidget extends StatelessWidget {
       );
     }
 
-    return const EmptyStateWidget(message: 'No gear items yet.');
+    if (state is ArmoryError) {
+      return CommonWidgets.buildError(state.message);
+    }
+
+    return const EmptyStateWidget(
+      message: 'No gear items yet.',
+      icon: Icons.add_circle_outline,
+    );
   }
 
   Widget _buildGearSection(String categoryKey, String title, String subtitle, List<ArmoryGear> items) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF222838))),
-      ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        childrenPadding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
-        iconColor: const Color(0xFF9AA4B2),
-        collapsedIconColor: const Color(0xFF9AA4B2),
-        title: LayoutBuilder(
-          builder: (context, constraints) {
-            // Calculate available width for text (accounting for expansion icon)
-            final availableWidth = constraints.maxWidth - 40; // 40px for expansion icon
-
-            return SizedBox(
-              width: availableWidth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Color(0xFFE8EEF7),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  if (subtitle.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        subtitle,
-                        style: const TextStyle(
-                          color: Color(0xFF9AA4B2),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-        children: items.isEmpty
-            ? [
-          const Padding(
-            padding: EdgeInsets.all(8),
-            child: Text(
-              'No items.',
-              style: TextStyle(
-                color: Color(0xFF9AA4B2),
-                fontSize: 12,
-              ),
-            ),
-          )
-        ]
-            : items.map((gear) => GearItemCard(gear: gear)).toList(),
-      ),
+    return CommonWidgets.buildExpandableSection(
+      title: title,
+      subtitle: subtitle,
+      children: items.map((gear) => GearItemCard(gear: gear)).toList(),
     );
   }
 
@@ -167,4 +113,3 @@ class GearTabWidget extends StatelessWidget {
     );
   }
 }
-

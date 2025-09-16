@@ -1,8 +1,9 @@
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/gear_item_card.dart
 import 'package:flutter/material.dart';
 import '../../domain/entities/armory_gear.dart';
+import '../core/theme/app_theme.dart';
+import 'common/common_widgets.dart';
 
-// lib/user_dashboard/presentation/widgets/gear_item_card.dart (Also fix potential overflow)
 class GearItemCard extends StatelessWidget {
   final ArmoryGear gear;
 
@@ -12,12 +13,8 @@ class GearItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1220),
-        border: Border.all(color: const Color(0xFF222838)),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: AppSizes.itemPadding,
+      decoration: AppDecorations.itemCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -26,53 +23,28 @@ class GearItemCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   gear.model,
-                  style: const TextStyle(
-                    color: Color(0xFFE8EEF7),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: AppTextStyles.itemTitle,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0B1320),
-                  border: Border.all(color: const Color(0xFF222838)),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  gear.category,
-                  style: const TextStyle(
-                    color: Color(0xFF9AA4B2),
-                    fontSize: 11,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              const SizedBox(width: AppSizes.itemSpacing),
+              CommonWidgets.buildTag(gear.category),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSizes.smallSpacing),
           Wrap(
             spacing: 10,
-            runSpacing: 4,
+            runSpacing: AppSizes.smallSpacing,
             children: [
               if (gear.serial?.isNotEmpty == true)
                 Text(
                   'SN: ${gear.serial}',
-                  style: const TextStyle(
-                    color: Color(0xFF9AA4B2),
-                    fontSize: 12,
-                  ),
+                  style: AppTextStyles.itemSubtitle,
                 ),
               Text(
                 'Qty: ${gear.quantity}',
-                style: const TextStyle(
-                  color: Color(0xFF9AA4B2),
-                  fontSize: 12,
-                ),
+                style: AppTextStyles.itemSubtitle,
               ),
             ],
           ),

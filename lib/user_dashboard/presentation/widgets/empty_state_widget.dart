@@ -1,23 +1,39 @@
-// lib/user_dashboard/presentation/pages/user_dashboard_page.dart
+// lib/user_dashboard/presentation/widgets/empty_state_widget.dart
 import 'package:flutter/material.dart';
 
-// lib/user_dashboard/presentation/widgets/empty_state_widget.dart
+import '../core/theme/app_theme.dart';
+
 class EmptyStateWidget extends StatelessWidget {
   final String message;
+  final IconData? icon;
 
-  const EmptyStateWidget({super.key, required this.message});
+  const EmptyStateWidget({
+    super.key,
+    required this.message,
+    this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Text(
-        message,
-        style: const TextStyle(
-          color: Color(0xFF9AA4B2),
-          fontSize: 13,
-        ),
-        textAlign: TextAlign.center,
+      padding: AppSizes.cardPadding,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              color: AppColors.secondaryText,
+              size: AppSizes.largeIcon,
+            ),
+            const SizedBox(height: AppSizes.itemSpacing),
+          ],
+          Text(
+            message,
+            style: AppTextStyles.emptyStateText,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

@@ -8,7 +8,9 @@ import '../../../authentication/presentation/bloc/login_bloc/auth_event.dart';
 import '../../../authentication/presentation/bloc/login_bloc/auth_state.dart';
 import '../../../authentication/presentation/pages/login_page.dart';
 import '../bloc/armory_bloc.dart';
+import '../core/theme/app_theme.dart';
 import '../widgets/armory_tab_view.dart';
+import '../widgets/common/common_widgets.dart';
 
 class UserDashboardPage extends StatelessWidget {
   const UserDashboardPage({super.key});
@@ -28,8 +30,8 @@ class UserDashboardPage extends StatelessWidget {
 class UserDashboardView extends StatefulWidget {
   const UserDashboardView({super.key});
 
-  @override
-  State<UserDashboardView> createState() => _UserDashboardViewState();
+@override
+State<UserDashboardView> createState() => _UserDashboardViewState();
 }
 
 class _UserDashboardViewState extends State<UserDashboardView>
@@ -62,103 +64,104 @@ class _UserDashboardViewState extends State<UserDashboardView>
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF0F1115),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF151923),
-          elevation: 0,
-          title: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'PulseAim',
-                style: TextStyle(
-                  color: Color(0xFFE8EEF7),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              Text(
-                'Enhanced with Level 3 Schema',
-                style: TextStyle(
-                  color: Color(0xFF9AA4B2),
-                  fontSize: 12,
-                ),
-              ),
-            ],
+        backgroundColor: AppColors.primaryBackground,
+        appBar: _buildAppBar(),
+        body: userId == null ? _buildUnauthenticatedView() : _buildMainContent(),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.cardBackground,
+      elevation: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PulseAim',
+            style: AppTextStyles.pageTitle,
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout, color: Color(0xFFE8EEF7)),
-              onPressed: () {
-                context.read<AuthBloc>().add(const LogoutRequested());
-              },
-            ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            labelColor: const Color(0xFF57B7FF),
-            unselectedLabelColor: const Color(0xFF9AA4B2),
-            indicatorColor: const Color(0xFF57B7FF),
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              letterSpacing: 0.2,
-            ),
-            tabs: const [
-              Tab(text: 'Firearms'),
-              Tab(text: 'Ammo'),
-              Tab(text: 'Gear'),
-              Tab(text: 'Tools & Maint.'),
-              Tab(text: 'Loadouts'),
-              Tab(text: 'Report'),
-            ],
+          Text(
+            'Enhanced with Level 3 Schema',
+            style: AppTextStyles.pageSubtitle,
           ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(
+            Icons.logout,
+            color: AppColors.primaryText,
+            size: AppSizes.mediumIcon,
+          ),
+          onPressed: () {
+            context.read<AuthBloc>().add(const LogoutRequested());
+          },
         ),
-        body: userId == null
-            ? const Center(
-          child: Text(
-            'User not authenticated',
-            style: TextStyle(color: Color(0xFFE8EEF7)),
+      ],
+      bottom: _buildTabBar(),
+    );
+  }
+
+  PreferredSizeWidget _buildTabBar() {
+    return TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      labelColor: AppColors.accentText,
+      unselectedLabelColor: AppColors.secondaryText,
+      indicatorColor: AppColors.accentText,
+      labelStyle: AppTextStyles.tabLabel,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.itemSpacing),
+      tabs: const [
+        Tab(text: 'Firearms'),
+        Tab(text: 'Ammo'),
+        Tab(text: 'Gear'),
+        Tab(text: 'Tools & Maint.'),
+        Tab(text: 'Loadouts'),
+        Tab(text: 'Report'),
+      ],
+    );
+  }
+
+  Widget _buildUnauthenticatedView() {
+    return Center(
+      child: CommonWidgets.buildError('User not authenticated'),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return Container(
+      decoration: AppDecorations.pageDecoration,
+      child: TabBarView(
+        controller: _tabController,
+        children: [
+          ArmoryTabView(
+            userId: userId!,
+            tabType: ArmoryTabType.firearms,
           ),
-        )
-            : TabBarView(
-          controller: _tabController,
-          children: [
-            ArmoryTabView(
-              userId: userId!,
-              tabType: ArmoryTabType.firearms,
-            ),
-            ArmoryTabView(
-              userId: userId!,
-              tabType: ArmoryTabType.ammunition,
-            ),
-            ArmoryTabView(
-              userId: userId!,
-              tabType: ArmoryTabType.gear,
-            ),
-            ArmoryTabView(
-              userId: userId!,
-              tabType: ArmoryTabType.tools,
-            ),
-            ArmoryTabView(
-              userId: userId!,
-              tabType: ArmoryTabType.loadouts,
-            ),
-            ArmoryTabView(
-              userId: userId!,
-              tabType: ArmoryTabType.report,
-            ),
-          ],
-        ),
+          ArmoryTabView(
+            userId: userId!,
+            tabType: ArmoryTabType.ammunition,
+          ),
+          ArmoryTabView(
+            userId: userId!,
+            tabType: ArmoryTabType.gear,
+          ),
+          ArmoryTabView(
+            userId: userId!,
+            tabType: ArmoryTabType.tools,
+          ),
+          ArmoryTabView(
+            userId: userId!,
+            tabType: ArmoryTabType.loadouts,
+          ),
+          ArmoryTabView(
+            userId: userId!,
+            tabType: ArmoryTabType.report,
+          ),
+        ],
       ),
     );
   }
 }
-
-
-
-
-
-

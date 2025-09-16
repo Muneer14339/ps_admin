@@ -1,7 +1,8 @@
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/loadout_item_card.dart
 import 'package:flutter/material.dart';
 import '../../domain/entities/armory_loadout.dart';
-// lib/user_dashboard/presentation/widgets/loadout_item_card.dart
+import '../core/theme/app_theme.dart';
+
 class LoadoutItemCard extends StatelessWidget {
   final ArmoryLoadout loadout;
 
@@ -10,33 +11,26 @@ class LoadoutItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 14),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E1220),
-        border: Border.all(color: const Color(0xFF222838)),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      margin: AppSizes.itemMargin,
+      padding: AppSizes.itemPadding,
+      decoration: AppDecorations.itemCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             loadout.name,
-            style: const TextStyle(
-              color: Color(0xFFE8EEF7),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
+            style: AppTextStyles.itemTitle,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
-          if (loadout.notes?.isNotEmpty == true)
+          if (loadout.notes?.isNotEmpty == true) ...[
+            const SizedBox(height: AppSizes.smallSpacing),
             Text(
               loadout.notes!,
-              style: const TextStyle(
-                color: Color(0xFF9AA4B2),
-                fontSize: 12,
-              ),
+              style: AppTextStyles.itemSubtitle,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
             ),
+          ],
         ],
       ),
     );

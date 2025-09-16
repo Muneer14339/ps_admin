@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_state.dart';
+import '../core/theme/app_theme.dart';
 import 'add_ammunition_dialog.dart';
 import 'ammunition_item_card.dart';
 import 'armory_card.dart';
+import 'common/common_widgets.dart';
 import 'empty_state_widget.dart';
 
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart (Fixed)
 class AmmunitionTabWidget extends StatelessWidget {
   final String userId;
 
@@ -22,14 +23,14 @@ class AmmunitionTabWidget extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFF51CF66),
+              backgroundColor: AppColors.successColor,
             ),
           );
         } else if (state is ArmoryError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: const Color(0xFFFF6B6B),
+              backgroundColor: AppColors.errorColor,
             ),
           );
         }
@@ -40,6 +41,7 @@ class AmmunitionTabWidget extends StatelessWidget {
           description: 'Catalog brands and track lots with chrono data for better analytics.',
           onAddPressed: () => _showAddAmmunitionDialog(context),
           itemCount: state is AmmunitionLoaded ? state.ammunition.length : null,
+          isLoading: state is ArmoryLoadingAction,
           child: _buildAmmunitionList(state),
         );
       },
@@ -48,17 +50,15 @@ class AmmunitionTabWidget extends StatelessWidget {
 
   Widget _buildAmmunitionList(ArmoryState state) {
     if (state is ArmoryLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: Color(0xFF57B7FF)),
-        ),
-      );
+      return CommonWidgets.buildLoading(message: 'Loading ammunition...');
     }
 
     if (state is AmmunitionLoaded) {
       if (state.ammunition.isEmpty) {
-        return const EmptyStateWidget(message: 'No ammunition lots yet.');
+        return const EmptyStateWidget(
+          message: 'No ammunition lots yet.',
+          icon: Icons.add_circle_outline,
+        );
       }
 
       return Column(
@@ -68,7 +68,14 @@ class AmmunitionTabWidget extends StatelessWidget {
       );
     }
 
-    return const EmptyStateWidget(message: 'No ammunition lots yet.');
+    if (state is ArmoryError) {
+      return CommonWidgets.buildError(state.message);
+    }
+
+    return const EmptyStateWidget(
+      message: 'No ammunition lots yet.',
+      icon: Icons.add_circle_outline,
+    );
   }
 
   void _showAddAmmunitionDialog(BuildContext context) {
