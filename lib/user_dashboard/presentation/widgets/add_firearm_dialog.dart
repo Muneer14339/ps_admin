@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/usecases/usecase.dart';
 import '../../domain/entities/armory_firearm.dart';
 import '../../domain/entities/dropdown_option.dart';
-import '../../domain/usecases/get_dropdown_options_usecase.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
@@ -47,7 +46,6 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
   void initState() {
     super.initState();
     _initializeControllers();
-    _loadInitialData();
   }
 
   void _initializeControllers() {
@@ -61,31 +59,11 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     _dropdownValues['condition'] = 'good';
   }
 
-  void _loadInitialData() {
-    // setState(() {
-    //   _loadingMakes = true;
-    //   _loadingMechanisms = true;
-    //   _loadingCalibers = true;
-    // });
-    //
-    // // Load independent dropdowns (not filtered by type)
-    // context.read<ArmoryBloc>().add(
-    //   const LoadDropdownOptionsEvent(type: DropdownType.firearmMakes),
-    // );
-    // context.read<ArmoryBloc>().add(
-    //   const LoadDropdownOptionsEvent(type: DropdownType.firearmFiringMechanisms),
-    // );
-    // context.read<ArmoryBloc>().add(
-    //   const LoadDropdownOptionsEvent(type: DropdownType.calibers),
-    // );
-  }
-
   void _loadBrandsForType(String type) {
     setState(() {
       _loadingBrands = true;
       _loadingMakes = true;
       _loadingMechanisms = true;
-      _loadingCalibers = true;
 
       // Clear all dependent dropdowns
       _firearmBrands.clear();
@@ -93,7 +71,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _firearmGenerations.clear();
       _firearmMakes.clear();
       _firearmMechanisms.clear();
-      _calibers.clear();
+      _calibers.clear(); // Clear calibers but don't load them yet
 
       // Clear all dependent values
       _dropdownValues['brand'] = null;
@@ -104,7 +82,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _dropdownValues['caliber'] = null;
     });
 
-    // Load all type-dependent dropdowns
+    // Load type-dependent dropdowns (excluding calibers)
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(type: DropdownType.firearmBrands, filterValue: type),
     );
@@ -114,8 +92,23 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(type: DropdownType.firearmFiringMechanisms, filterValue: type),
     );
+  }
+
+  void _loadCalibersForBrand(String brand) {
+    setState(() {
+      _loadingCalibers = true;
+      _calibers.clear();
+      _dropdownValues['caliber'] = null;
+    });
+
+    // Check if brand is custom - if so, show all calibers
+    final filterBrand = EnhancedDialogWidgets.isCustomValue(brand) ? null : brand;
+
     context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(type: DropdownType.calibers),
+      LoadDropdownOptionsEvent(
+        type: DropdownType.calibers,
+        filterValue: filterBrand,
+      ),
     );
   }
 
@@ -283,7 +276,10 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               options: _firearmBrands,
               onChanged: (value) {
                 setState(() => _dropdownValues['brand'] = value);
-                if (value != null) _loadModelsForBrand(value);
+                if (value != null) {
+                  _loadModelsForBrand(value);
+                  _loadCalibersForBrand(value); // Load calibers when brand is selected
+                }
               },
               customFieldLabel: 'Brand',
               customHintText: 'e.g., Custom Manufacturer',
@@ -347,7 +343,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 customHintText: 'e.g., .300 WinMag',
                 isRequired: true,
                 isLoading: _loadingCalibers,
-                enabled: _dropdownValues['type'] != null,
+                enabled: _dropdownValues['brand'] != null, // Only enable when brand is selected
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
