@@ -62,41 +62,60 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
   }
 
   void _loadInitialData() {
-    setState(() {
-      _loadingMakes = true;
-      _loadingMechanisms = true;
-      _loadingCalibers = true;
-    });
-
-    // Load independent dropdowns (not filtered by type)
-    context.read<ArmoryBloc>().add(
-      const LoadDropdownOptionsEvent(type: DropdownType.firearmMakes),
-    );
-    context.read<ArmoryBloc>().add(
-      const LoadDropdownOptionsEvent(type: DropdownType.firearmFiringMechanisms),
-    );
-    context.read<ArmoryBloc>().add(
-      const LoadDropdownOptionsEvent(type: DropdownType.calibers),
-    );
+    // setState(() {
+    //   _loadingMakes = true;
+    //   _loadingMechanisms = true;
+    //   _loadingCalibers = true;
+    // });
+    //
+    // // Load independent dropdowns (not filtered by type)
+    // context.read<ArmoryBloc>().add(
+    //   const LoadDropdownOptionsEvent(type: DropdownType.firearmMakes),
+    // );
+    // context.read<ArmoryBloc>().add(
+    //   const LoadDropdownOptionsEvent(type: DropdownType.firearmFiringMechanisms),
+    // );
+    // context.read<ArmoryBloc>().add(
+    //   const LoadDropdownOptionsEvent(type: DropdownType.calibers),
+    // );
   }
 
   void _loadBrandsForType(String type) {
     setState(() {
       _loadingBrands = true;
+      _loadingMakes = true;
+      _loadingMechanisms = true;
+      _loadingCalibers = true;
+
+      // Clear all dependent dropdowns
       _firearmBrands.clear();
       _firearmModels.clear();
       _firearmGenerations.clear();
+      _firearmMakes.clear();
+      _firearmMechanisms.clear();
+      _calibers.clear();
+
+      // Clear all dependent values
       _dropdownValues['brand'] = null;
       _dropdownValues['model'] = null;
       _dropdownValues['generation'] = null;
+      _dropdownValues['make'] = null;
+      _dropdownValues['firingMechanism'] = null;
+      _dropdownValues['caliber'] = null;
     });
 
-    // Pass the selected type as filterValue to get brands filtered by type
+    // Load all type-dependent dropdowns
     context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.firearmBrands,
-        filterValue: type,
-      ),
+      LoadDropdownOptionsEvent(type: DropdownType.firearmBrands, filterValue: type),
+    );
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(type: DropdownType.firearmMakes, filterValue: type),
+    );
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(type: DropdownType.firearmFiringMechanisms, filterValue: type),
+    );
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(type: DropdownType.calibers),
     );
   }
 
@@ -317,6 +336,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 customHintText: 'e.g., Custom Make',
                 isRequired: true,
                 isLoading: _loadingMakes,
+                enabled: _dropdownValues['type'] != null,
               ),
               EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Caliber *',
@@ -327,6 +347,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 customHintText: 'e.g., .300 WinMag',
                 isRequired: true,
                 isLoading: _loadingCalibers,
+                enabled: _dropdownValues['type'] != null,
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -346,6 +367,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 customFieldLabel: 'Firing Mechanism',
                 customHintText: 'e.g., Custom Action',
                 isLoading: _loadingMechanisms,
+                enabled: _dropdownValues['type'] != null,
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),

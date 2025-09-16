@@ -42,8 +42,8 @@ abstract class ArmoryRemoteDataSource {
   Future<List<DropdownOption>> getFirearmBrands([String? type]);
   Future<List<DropdownOption>> getFirearmModels(String brand, [String? type]);
   Future<List<DropdownOption>> getFirearmGenerations(String brand, String model, [String? type]);
-  Future<List<DropdownOption>> getFirearmFiringMechanisms();
-  Future<List<DropdownOption>> getFirearmMakes();
+  Future<List<DropdownOption>> getFirearmFiringMechanisms([String? type]);
+  Future<List<DropdownOption>> getFirearmMakes([String? type]);
   Future<List<DropdownOption>> getCalibers([String? brand]);
   Future<List<DropdownOption>> getAmmunitionBrands();
   Future<List<DropdownOption>> getBulletTypes([String? caliber]);
@@ -512,10 +512,16 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
 
 
   @override
-  Future<List<DropdownOption>> getFirearmFiringMechanisms() async {
+  Future<List<DropdownOption>> getFirearmFiringMechanisms([String? type]) async {
     try {
       final firearmsData = await _getFirearmsData();
-      final mechanisms = firearmsData
+
+      // Filter by type if provided and not empty
+      final filteredData = (type != null && type.isNotEmpty)
+          ? firearmsData.where((data) => data['type']?.toString().toLowerCase() == type.toLowerCase())
+          : firearmsData;
+
+      final mechanisms = filteredData
           .map((data) => data['firing_machanism']?.toString() ?? '')
           .where((mech) => mech.isNotEmpty)
           .toSet()
@@ -529,10 +535,16 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   }
 
   @override
-  Future<List<DropdownOption>> getFirearmMakes() async {
+  Future<List<DropdownOption>> getFirearmMakes([String? type]) async {
     try {
       final firearmsData = await _getFirearmsData();
-      final makes = firearmsData
+
+      // Filter by type if provided and not empty
+      final filteredData = (type != null && type.isNotEmpty)
+          ? firearmsData.where((data) => data['type']?.toString().toLowerCase() == type.toLowerCase())
+          : firearmsData;
+
+      final makes = filteredData
           .map((data) => data['make']?.toString() ?? '')
           .where((make) => make.isNotEmpty)
           .toSet()

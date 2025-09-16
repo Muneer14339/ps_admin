@@ -372,9 +372,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms() async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms([String? type]) async {
     try {
-      final options = await remoteDataSource.getFirearmFiringMechanisms();
+      final options = await remoteDataSource.getFirearmFiringMechanisms(type);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -382,9 +382,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmMakes() async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmMakes([String? type]) async {
     try {
-      final options = await remoteDataSource.getFirearmMakes();
+      final options = await remoteDataSource.getFirearmMakes(type);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));

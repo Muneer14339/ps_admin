@@ -39,10 +39,14 @@ class GetDropdownOptionsUseCase implements UseCase<List<DropdownOption>, Dropdow
         );
 
       case DropdownType.firearmFiringMechanisms:
-        return await repository.getFirearmFiringMechanisms();
+      // Pass type filter only if not custom
+        final typeFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
+        return await repository.getFirearmFiringMechanisms(typeFilter);
 
       case DropdownType.firearmMakes:
-        return await repository.getFirearmMakes();
+      // Pass type filter only if not custom
+        final typeFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
+        return await repository.getFirearmMakes(typeFilter);
 
       case DropdownType.calibers:
       // Show all calibers if brand is custom
