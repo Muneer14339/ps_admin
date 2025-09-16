@@ -1,9 +1,10 @@
-// lib/main.dart (updated)
+// lib/main.dart (updated with navigator key)
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'admin_dashboard/presentation/pages/admin_home_page.dart';
 import 'user_dashboard/presentation/pages/user_dashboard_page.dart';
+import 'user_dashboard/presentation/widgets/common/enhanced_dialog_widgets.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_bloc.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_event.dart';
 import 'authentication/presentation/bloc/login_bloc/auth_state.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PulseAim App',
+      navigatorKey: EnhancedDialogWidgets.navigatorKey, // Add navigator key for custom dialogs
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,

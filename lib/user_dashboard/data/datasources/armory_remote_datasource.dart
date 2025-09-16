@@ -38,22 +38,179 @@ abstract class ArmoryRemoteDataSource {
   Future<void> updateLoadout(String userId, ArmoryLoadoutModel loadout);
   Future<void> deleteLoadout(String userId, String loadoutId);
 
-  // Dropdown options
-  Future<List<DropdownOption>> getFirearmBrands();
-  Future<List<DropdownOption>> getFirearmModels(String brand);
-  Future<List<DropdownOption>> getFirearmGenerations(String brand, String model);
+  // Dropdown options with filtering support
+  Future<List<DropdownOption>> getFirearmBrands([String? type]);
+  Future<List<DropdownOption>> getFirearmModels(String brand, [String? type]);
+  Future<List<DropdownOption>> getFirearmGenerations(String brand, String model, [String? type]);
   Future<List<DropdownOption>> getFirearmFiringMechanisms();
   Future<List<DropdownOption>> getFirearmMakes();
-  Future<List<DropdownOption>> getCalibers();
+  Future<List<DropdownOption>> getCalibers([String? brand]);
   Future<List<DropdownOption>> getAmmunitionBrands();
+
+  // Method to clear cache when needed
+  void clearCache();
 }
 
 class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   final FirebaseFirestore firestore;
 
+  // Cache for dropdown data to avoid repeated Firebase queries
+  List<Map<String, dynamic>>? _firearmsCache;
+  List<Map<String, dynamic>>? _ammunitionCache;
+
   ArmoryRemoteDataSourceImpl({required this.firestore});
 
-  // Firearms
+  // Load all firearms data once and cache it
+  Future<List<Map<String, dynamic>>> _getFirearmsData() async {
+    if (_firearmsCache != null) return _firearmsCache!;
+
+    try {
+      final querySnapshot = await firestore.collection('firearms').get();
+      _firearmsCache = querySnapshot.docs.map((doc) => doc.data()).toList();
+      return _firearmsCache!;
+    } catch (e) {
+      throw Exception('Failed to load firearms data: $e');
+    }
+  }
+
+  // Load all ammunition data once and cache it
+  Future<List<Map<String, dynamic>>> _getAmmunitionData() async {
+    if (_ammunitionCache != null) return _ammunitionCache!;
+
+    try {
+      final querySnapshot = await firestore.collection('ammunition').get();
+      _ammunitionCache = querySnapshot.docs.map((doc) => doc.data()).toList();
+      return _ammunitionCache!;
+    } catch (e) {
+      throw Exception('Failed to load ammunition data: $e');
+    }
+  }
+
+  @override
+  void clearCache() {
+    _firearmsCache = null;
+    _ammunitionCache = null;
+  }
+
+  // Fixed dropdown options with proper filtering and caching
+  @override
+  Future<List<DropdownOption>> getFirearmBrands([String? type]) async {
+    try {
+      final firearmsData = await _getFirearmsData();
+
+      // Filter by type if provided and not empty
+      final filteredData = (type != null && type.isNotEmpty)
+          ? firearmsData.where((data) => data['type']?.toString().toLowerCase() == type.toLowerCase())
+          : firearmsData;
+
+      final brands = filteredData
+          .map((data) => data['brand']?.toString() ?? '')
+          .where((brand) => brand.isNotEmpty)
+          .toSet()
+          .toList();
+
+      brands.sort();
+      return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm brands: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getFirearmModels(String brand, [String? type]) async {
+    try {
+      final firearmsData = await _getFirearmsData();
+
+      // If brand is empty, show all models
+      final filteredData = brand.isEmpty
+          ? firearmsData
+          : firearmsData.where((data) {
+        final matchesBrand = data['brand']?.toString() == brand;
+        final matchesType = type == null || type.isEmpty ||
+            data['type']?.toString().toLowerCase() == type.toLowerCase();
+        return matchesBrand && matchesType;
+      });
+
+      final models = filteredData
+          .map((data) => data['model']?.toString() ?? '')
+          .where((model) => model.isNotEmpty)
+          .toSet()
+          .toList();
+
+      models.sort();
+      return models.map((model) => DropdownOption(value: model, label: model)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm models: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getFirearmGenerations(String brand, String model, [String? type]) async {
+    try {
+      final firearmsData = await _getFirearmsData();
+
+      // If brand or model is empty, show all generations
+      final filteredData = (brand.isEmpty || model.isEmpty)
+          ? firearmsData
+          : firearmsData.where((data) {
+        final matchesBrand = data['brand']?.toString() == brand;
+        final matchesModel = data['model']?.toString() == model;
+        final matchesType = type == null || type.isEmpty ||
+            data['type']?.toString().toLowerCase() == type.toLowerCase();
+        return matchesBrand && matchesModel && matchesType;
+      });
+
+      final generations = filteredData
+          .map((data) => data['generation']?.toString() ?? '')
+          .where((gen) => gen.isNotEmpty)
+          .toSet()
+          .toList();
+
+      generations.sort();
+      return generations.map((gen) => DropdownOption(value: gen, label: gen)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm generations: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getCalibers([String? brand]) async {
+    try {
+      // Get calibers from both firearms and ammunition collections
+      final firearmsData = await _getFirearmsData();
+      final ammoData = await _getAmmunitionData();
+
+      final calibers = <String>{};
+
+      // Filter firearms by brand if provided and not empty
+      final filteredFirearms = (brand != null && brand.isNotEmpty)
+          ? firearmsData.where((data) => data['brand']?.toString() == brand)
+          : firearmsData;
+
+      // Filter ammunition by brand if provided and not empty
+      final filteredAmmo = (brand != null && brand.isNotEmpty)
+          ? ammoData.where((data) => data['brand']?.toString() == brand)
+          : ammoData;
+
+      for (final data in filteredFirearms) {
+        final caliber = data['caliber']?.toString() ?? '';
+        if (caliber.isNotEmpty) calibers.add(caliber);
+      }
+
+      for (final data in filteredAmmo) {
+        final caliber = data['caliber']?.toString() ?? '';
+        if (caliber.isNotEmpty) calibers.add(caliber);
+      }
+
+      final caliberList = calibers.toList();
+      caliberList.sort();
+      return caliberList.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
+    } catch (e) {
+      throw Exception('Failed to get calibers: $e');
+    }
+  }
+
+  // Firearms CRUD operations remain the same...
   @override
   Future<List<ArmoryFirearmModel>> getFirearms(String userId) async {
     try {
@@ -113,7 +270,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  // Ammunition
+  // Ammunition CRUD operations remain the same...
   @override
   Future<List<ArmoryAmmunitionModel>> getAmmunition(String userId) async {
     try {
@@ -173,7 +330,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  // Gear
+  // Gear, Tools, Loadouts CRUD operations remain the same...
   @override
   Future<List<ArmoryGearModel>> getGear(String userId) async {
     try {
@@ -233,7 +390,6 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  // Tools
   @override
   Future<List<ArmoryToolModel>> getTools(String userId) async {
     try {
@@ -293,7 +449,6 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  // Loadouts
   @override
   Future<List<ArmoryLoadoutModel>> getLoadouts(String userId) async {
     try {
@@ -353,73 +508,14 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  // Dropdown options from existing collections
-  @override
-  Future<List<DropdownOption>> getFirearmBrands() async {
-    try {
-      final querySnapshot = await firestore.collection('firearms').get();
-      final brands = querySnapshot.docs
-          .map((doc) => doc.data()['brand']?.toString() ?? '')
-          .where((brand) => brand.isNotEmpty)
-          .toSet()
-          .toList();
 
-      brands.sort();
-      return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm brands: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getFirearmModels(String brand) async {
-    try {
-      final querySnapshot = await firestore
-          .collection('firearms')
-          .where('brand', isEqualTo: brand)
-          .get();
-
-      final models = querySnapshot.docs
-          .map((doc) => doc.data()['model']?.toString() ?? '')
-          .where((model) => model.isNotEmpty)
-          .toSet()
-          .toList();
-
-      models.sort();
-      return models.map((model) => DropdownOption(value: model, label: model)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm models: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getFirearmGenerations(String brand, String model) async {
-    try {
-      final querySnapshot = await firestore
-          .collection('firearms')
-          .where('brand', isEqualTo: brand)
-          .where('model', isEqualTo: model)
-          .get();
-
-      final generations = querySnapshot.docs
-          .map((doc) => doc.data()['generation']?.toString() ?? '')
-          .where((gen) => gen.isNotEmpty)
-          .toSet()
-          .toList();
-
-      generations.sort();
-      return generations.map((gen) => DropdownOption(value: gen, label: gen)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm generations: $e');
-    }
-  }
 
   @override
   Future<List<DropdownOption>> getFirearmFiringMechanisms() async {
     try {
-      final querySnapshot = await firestore.collection('firearms').get();
-      final mechanisms = querySnapshot.docs
-          .map((doc) => doc.data()['firing_machanism']?.toString() ?? '')
+      final firearmsData = await _getFirearmsData();
+      final mechanisms = firearmsData
+          .map((data) => data['firing_machanism']?.toString() ?? '')
           .where((mech) => mech.isNotEmpty)
           .toSet()
           .toList();
@@ -434,9 +530,9 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   @override
   Future<List<DropdownOption>> getFirearmMakes() async {
     try {
-      final querySnapshot = await firestore.collection('firearms').get();
-      final makes = querySnapshot.docs
-          .map((doc) => doc.data()['make']?.toString() ?? '')
+      final firearmsData = await _getFirearmsData();
+      final makes = firearmsData
+          .map((data) => data['make']?.toString() ?? '')
           .where((make) => make.isNotEmpty)
           .toSet()
           .toList();
@@ -448,39 +544,13 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  @override
-  Future<List<DropdownOption>> getCalibers() async {
-    try {
-      // Get calibers from both firearms and ammunition collections
-      final firearmsSnapshot = await firestore.collection('firearms').get();
-      final ammoSnapshot = await firestore.collection('ammunition').get();
-
-      final calibers = <String>{};
-
-      for (final doc in firearmsSnapshot.docs) {
-        final caliber = doc.data()['caliber']?.toString() ?? '';
-        if (caliber.isNotEmpty) calibers.add(caliber);
-      }
-
-      for (final doc in ammoSnapshot.docs) {
-        final caliber = doc.data()['caliber']?.toString() ?? '';
-        if (caliber.isNotEmpty) calibers.add(caliber);
-      }
-
-      final caliberList = calibers.toList();
-      caliberList.sort();
-      return caliberList.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
-    } catch (e) {
-      throw Exception('Failed to get calibers: $e');
-    }
-  }
 
   @override
   Future<List<DropdownOption>> getAmmunitionBrands() async {
     try {
-      final querySnapshot = await firestore.collection('ammunition').get();
-      final brands = querySnapshot.docs
-          .map((doc) => doc.data()['brand']?.toString() ?? '')
+      final ammoData = await _getAmmunitionData();
+      final brands = ammoData
+          .map((data) => data['brand']?.toString() ?? '')
           .where((brand) => brand.isNotEmpty)
           .toSet()
           .toList();

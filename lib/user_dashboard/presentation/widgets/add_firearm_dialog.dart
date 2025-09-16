@@ -10,6 +10,7 @@ import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
 import '../core/theme/app_theme.dart';
 import 'common/dialog_widgets.dart';
+import 'common/enhanced_dialog_widgets.dart';
 
 class AddFirearmDialog extends StatefulWidget {
   final String userId;
@@ -67,6 +68,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _loadingCalibers = true;
     });
 
+    // Load independent dropdowns (not filtered by type)
     context.read<ArmoryBloc>().add(
       const LoadDropdownOptionsEvent(type: DropdownType.firearmMakes),
     );
@@ -89,12 +91,18 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _dropdownValues['generation'] = null;
     });
 
+    // Pass the selected type as filterValue to get brands filtered by type
     context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(type: DropdownType.firearmBrands, filterValue: type),
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmBrands,
+        filterValue: type,
+      ),
     );
   }
 
   void _loadModelsForBrand(String brand) {
+    final selectedType = _dropdownValues['type'];
+
     setState(() {
       _loadingModels = true;
       _firearmModels.clear();
@@ -103,9 +111,22 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _dropdownValues['generation'] = null;
     });
 
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(type: DropdownType.firearmModels, filterValue: brand),
-    );
+    // Check if brand is custom
+    if (EnhancedDialogWidgets.isCustomValue(brand)) {
+      // For custom brand, load all models without filtering
+      context.read<ArmoryBloc>().add(
+        const LoadDropdownOptionsEvent(type: DropdownType.firearmModels, filterValue: null),
+      );
+    } else {
+      // For Firebase brand, use cascading logic
+      context.read<ArmoryBloc>().add(
+        LoadDropdownOptionsEvent(
+          type: DropdownType.firearmModels,
+          filterValue: brand,
+          secondaryFilter: selectedType,
+        ),
+      );
+    }
   }
 
   void _loadGenerationsForBrandModel(String brand, String model) {
@@ -115,13 +136,23 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _dropdownValues['generation'] = null;
     });
 
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.firearmGenerations,
-        filterValue: brand,
-        secondaryFilter: model,
-      ),
-    );
+    // Check if brand or model is custom
+    if (EnhancedDialogWidgets.isCustomValue(brand) ||
+        EnhancedDialogWidgets.isCustomValue(model)) {
+      // For custom values, load all generations without filtering
+      context.read<ArmoryBloc>().add(
+        const LoadDropdownOptionsEvent(type: DropdownType.firearmGenerations, filterValue: null),
+      );
+    } else {
+      // For Firebase values, use cascading logic
+      context.read<ArmoryBloc>().add(
+        LoadDropdownOptionsEvent(
+          type: DropdownType.firearmGenerations,
+          filterValue: brand,
+          secondaryFilter: model,
+        ),
+      );
+    }
   }
 
   @override
@@ -146,7 +177,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
           children: [
             CommonDialogWidgets.buildHeader(
               title: 'Add Firearm',
-              badge: 'Level 1 UI',
+              badge: 'Smart + Custom',
               onClose: () => Navigator.of(context).pop(),
             ),
             Flexible(child: _buildForm()),
@@ -208,6 +239,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Firearm Type - No custom option allowed
             CommonDialogWidgets.buildDropdownField(
               label: 'Firearm Type *',
               value: _dropdownValues['type'],
@@ -225,7 +257,8 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
-            CommonDialogWidgets.buildDropdownField(
+            // Brand - with custom option
+            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
               label: 'Brand *',
               value: _dropdownValues['brand'],
               options: _firearmBrands,
@@ -233,13 +266,16 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 setState(() => _dropdownValues['brand'] = value);
                 if (value != null) _loadModelsForBrand(value);
               },
+              customFieldLabel: 'Brand',
+              customHintText: 'e.g., Custom Manufacturer',
               isRequired: true,
               isLoading: _loadingBrands,
               enabled: _dropdownValues['type'] != null,
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
-            CommonDialogWidgets.buildDropdownField(
+            // Model - with custom option
+            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
               label: 'Model *',
               value: _dropdownValues['model'],
               options: _firearmModels,
@@ -249,58 +285,72 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                   _loadGenerationsForBrandModel(_dropdownValues['brand']!, value);
                 }
               },
+              customFieldLabel: 'Model',
+              customHintText: 'e.g., Custom Model Name',
               isRequired: true,
               isLoading: _loadingModels,
               enabled: _dropdownValues['brand'] != null,
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
-            CommonDialogWidgets.buildDropdownField(
+            // Generation - with custom option
+            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
               label: 'Generation',
               value: _dropdownValues['generation'],
               options: _firearmGenerations,
               onChanged: (value) => setState(() => _dropdownValues['generation'] = value),
+              customFieldLabel: 'Generation',
+              customHintText: 'e.g., Gen 5, Mk II',
               isLoading: _loadingGenerations,
               enabled: _dropdownValues['model'] != null,
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Make and Caliber - with custom options
             CommonDialogWidgets.buildResponsiveRow([
-              CommonDialogWidgets.buildDropdownField(
+              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Make *',
                 value: _dropdownValues['make'],
                 options: _firearmMakes,
                 onChanged: (value) => setState(() => _dropdownValues['make'] = value),
+                customFieldLabel: 'Make',
+                customHintText: 'e.g., Custom Make',
                 isRequired: true,
                 isLoading: _loadingMakes,
               ),
-              CommonDialogWidgets.buildDropdownField(
+              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Caliber *',
                 value: _dropdownValues['caliber'],
                 options: _calibers,
                 onChanged: (value) => setState(() => _dropdownValues['caliber'] = value),
+                customFieldLabel: 'Caliber',
+                customHintText: 'e.g., .300 WinMag',
                 isRequired: true,
                 isLoading: _loadingCalibers,
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Nickname and Firing Mechanism
             CommonDialogWidgets.buildResponsiveRow([
               CommonDialogWidgets.buildTextField(
                 label: 'Nickname/Identifier *',
                 controller: _controllers['nickname']!,
                 isRequired: true,
               ),
-              CommonDialogWidgets.buildDropdownField(
+              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Firing Mechanism',
                 value: _dropdownValues['firingMechanism'],
                 options: _firearmMechanisms,
                 onChanged: (value) => setState(() => _dropdownValues['firingMechanism'] = value),
+                customFieldLabel: 'Firing Mechanism',
+                customHintText: 'e.g., Custom Action',
                 isLoading: _loadingMechanisms,
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Status and Serial Number
             CommonDialogWidgets.buildResponsiveRow([
               CommonDialogWidgets.buildDropdownField(
                 label: 'Status *',
@@ -320,6 +370,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Notes
             CommonDialogWidgets.buildTextField(
               label: 'Notes',
               controller: _controllers['notes']!,
@@ -365,16 +416,16 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
 
     final firearm = ArmoryFirearm(
       type: _dropdownValues['type']!,
-      make: _dropdownValues['make']!,
-      model: _dropdownValues['model']!,
-      caliber: _dropdownValues['caliber']!,
+      make: EnhancedDialogWidgets.getDisplayValue(_dropdownValues['make']),
+      model: EnhancedDialogWidgets.getDisplayValue(_dropdownValues['model']),
+      caliber: EnhancedDialogWidgets.getDisplayValue(_dropdownValues['caliber']),
       nickname: nickname,
       status: _dropdownValues['status']!,
       serial: _controllers['serial']?.text.trim(),
       notes: _controllers['notes']?.text.trim(),
-      brand: _dropdownValues['brand'],
-      generation: _dropdownValues['generation'],
-      firingMechanism: _dropdownValues['firingMechanism'],
+      brand: EnhancedDialogWidgets.getDisplayValue(_dropdownValues['brand']),
+      generation: EnhancedDialogWidgets.getDisplayValue(_dropdownValues['generation']),
+      firingMechanism: EnhancedDialogWidgets.getDisplayValue(_dropdownValues['firingMechanism']),
       dateAdded: DateTime.now(),
     );
 

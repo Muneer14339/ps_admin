@@ -1,4 +1,4 @@
-// lib/user_dashboard/data/repositories/armory_repository_impl.dart (Complete)
+// lib/user_dashboard/data/repositories/armory_repository_impl.dart
 import 'package:dartz/dartz.dart';
 import '../../../core/error/failures.dart';
 import '../../domain/entities/armory_firearm.dart';
@@ -20,7 +20,7 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
 
   ArmoryRepositoryImpl({required this.remoteDataSource});
 
-  // Firearms
+  // Firearms - methods remain the same
   @override
   Future<Either<Failure, List<ArmoryFirearm>>> getFirearms(String userId) async {
     try {
@@ -76,6 +76,8 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
         dateAdded: firearm.dateAdded,
       );
       await remoteDataSource.addFirearm(userId, model);
+      // Clear cache when new firearm is added
+      remoteDataSource.clearCache();
       return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -87,6 +89,8 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     try {
       final model = firearm as ArmoryFirearmModel;
       await remoteDataSource.updateFirearm(userId, model);
+      // Clear cache when firearm is updated
+      remoteDataSource.clearCache();
       return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -97,13 +101,15 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   Future<Either<Failure, void>> deleteFirearm(String userId, String firearmId) async {
     try {
       await remoteDataSource.deleteFirearm(userId, firearmId);
+      // Clear cache when firearm is deleted
+      remoteDataSource.clearCache();
       return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
     }
   }
 
-  // Ammunition
+  // Ammunition - methods remain mostly the same
   @override
   Future<Either<Failure, List<ArmoryAmmunition>>> getAmmunition(String userId) async {
     try {
@@ -153,6 +159,8 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
         dateAdded: ammunition.dateAdded,
       );
       await remoteDataSource.addAmmunition(userId, model);
+      // Clear cache when new ammunition is added
+      remoteDataSource.clearCache();
       return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -164,6 +172,8 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     try {
       final model = ammunition as ArmoryAmmunitionModel;
       await remoteDataSource.updateAmmunition(userId, model);
+      // Clear cache when ammunition is updated
+      remoteDataSource.clearCache();
       return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -174,13 +184,15 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   Future<Either<Failure, void>> deleteAmmunition(String userId, String ammunitionId) async {
     try {
       await remoteDataSource.deleteAmmunition(userId, ammunitionId);
+      // Clear cache when ammunition is deleted
+      remoteDataSource.clearCache();
       return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
     }
   }
 
-  // Gear
+  // Gear, Tools, Loadouts methods remain the same...
   @override
   Future<Either<Failure, List<ArmoryGear>>> getGear(String userId) async {
     try {
@@ -230,7 +242,6 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     }
   }
 
-  // Tools
   @override
   Future<Either<Failure, List<ArmoryTool>>> getTools(String userId) async {
     try {
@@ -280,7 +291,6 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     }
   }
 
-  // Loadouts
   @override
   Future<Either<Failure, List<ArmoryLoadout>>> getLoadouts(String userId) async {
     try {
@@ -330,11 +340,11 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     }
   }
 
-  // Dropdown options
+  // Updated dropdown options with filtering support
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmBrands() async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmBrands([String? type]) async {
     try {
-      final options = await remoteDataSource.getFirearmBrands();
+      final options = await remoteDataSource.getFirearmBrands(type);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -342,9 +352,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmModels(String brand) async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmModels(String brand, [String? type]) async {
     try {
-      final options = await remoteDataSource.getFirearmModels(brand);
+      final options = await remoteDataSource.getFirearmModels(brand, type);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -352,9 +362,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(String brand, String model) async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(String brand, String model, [String? type]) async {
     try {
-      final options = await remoteDataSource.getFirearmGenerations(brand, model);
+      final options = await remoteDataSource.getFirearmGenerations(brand, model, type);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -382,9 +392,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getCalibers() async {
+  Future<Either<Failure, List<DropdownOption>>> getCalibers([String? brand]) async {
     try {
-      final options = await remoteDataSource.getCalibers();
+      final options = await remoteDataSource.getCalibers(brand);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));

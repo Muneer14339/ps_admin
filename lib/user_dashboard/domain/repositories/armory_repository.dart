@@ -39,12 +39,12 @@ abstract class ArmoryRepository {
   Future<Either<Failure, void>> updateLoadout(String userId, ArmoryLoadout loadout);
   Future<Either<Failure, void>> deleteLoadout(String userId, String loadoutId);
 
-  // Dropdown options from existing data
-  Future<Either<Failure, List<DropdownOption>>> getFirearmBrands();
-  Future<Either<Failure, List<DropdownOption>>> getFirearmModels(String brand);
-  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(String brand, String model);
+  // Dropdown options with filtering support
+  Future<Either<Failure, List<DropdownOption>>> getFirearmBrands([String? type]);
+  Future<Either<Failure, List<DropdownOption>>> getFirearmModels(String brand, [String? type]);
+  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(String brand, String model, [String? type]);
   Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms();
   Future<Either<Failure, List<DropdownOption>>> getFirearmMakes();
-  Future<Either<Failure, List<DropdownOption>>> getCalibers();
+  Future<Either<Failure, List<DropdownOption>>> getCalibers([String? brand]);
   Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands();
 }
