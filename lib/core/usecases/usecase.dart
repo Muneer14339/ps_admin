@@ -81,4 +81,5 @@ enum DropdownType {
   firearmMakes,
   calibers,
   ammunitionBrands,
+  bulletTypes  // Add this line
 }

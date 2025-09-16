@@ -46,6 +46,7 @@ abstract class ArmoryRemoteDataSource {
   Future<List<DropdownOption>> getFirearmMakes();
   Future<List<DropdownOption>> getCalibers([String? brand]);
   Future<List<DropdownOption>> getAmmunitionBrands();
+  Future<List<DropdownOption>> getBulletTypes([String? caliber]);
 
   // Method to clear cache when needed
   void clearCache();
@@ -559,6 +560,29 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
       return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
     } catch (e) {
       throw Exception('Failed to get ammunition brands: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getBulletTypes([String? caliber]) async {
+    try {
+      final ammoData = await _getAmmunitionData();
+
+      // Filter ammunition by caliber if provided and not empty
+      final filteredAmmo = (caliber != null && caliber.isNotEmpty)
+          ? ammoData.where((data) => data['caliber']?.toString() == caliber)
+          : ammoData;
+
+      final bullets = filteredAmmo
+          .map((data) => data['bullet weight (gr)']?.toString() ?? '')
+          .where((bullet) => bullet.isNotEmpty)
+          .toSet()
+          .toList();
+
+      bullets.sort();
+      return bullets.map((bullet) => DropdownOption(value: bullet, label: bullet)).toList();
+    } catch (e) {
+      throw Exception('Failed to get bullet types: $e');
     }
   }
 }

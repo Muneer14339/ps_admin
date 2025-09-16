@@ -33,6 +33,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
   // Loading states
   bool _loadingBrands = false;
   bool _loadingCalibers = false;
+  bool _loadingBulletTypes = false;
 
   @override
   void initState() {
@@ -77,53 +78,21 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
   }
 
   void _generateBulletTypesForCaliber(String caliber) {
-    // Get clean caliber value (remove custom prefix if any)
-    final cleanCaliber = EnhancedDialogWidgets.getDisplayValue(caliber);
-
     setState(() {
-      _bulletTypes = _getCommonBulletTypes(cleanCaliber);
+      _loadingBulletTypes = true;
+      _bulletTypes.clear();
+      _dropdownValues['bulletType'] = null;
     });
-  }
 
-  List<DropdownOption> _getCommonBulletTypes(String caliber) {
-    switch (caliber.toLowerCase()) {
-      case '.223 rem':
-      case '5.56x45':
-      case '5.56':
-        return [
-          const DropdownOption(value: '55gr FMJ', label: '55 gr FMJ'),
-          const DropdownOption(value: '62gr M855', label: '62 gr M855'),
-          const DropdownOption(value: '77gr OTM', label: '77 gr OTM'),
-        ];
-      case '.308 win':
-      case '7.62x51':
-      case '.308':
-        return [
-          const DropdownOption(value: '147gr FMJ', label: '147 gr FMJ'),
-          const DropdownOption(value: '168gr HPBT', label: '168 gr HPBT'),
-          const DropdownOption(value: '175gr SMK', label: '175 gr SMK'),
-        ];
-      case '9mm':
-        return [
-          const DropdownOption(value: '115gr FMJ', label: '115 gr FMJ'),
-          const DropdownOption(value: '124gr HP', label: '124 gr HP'),
-          const DropdownOption(value: '147gr HP', label: '147 gr HP'),
-        ];
-      case '.45 acp':
-      case '.45':
-        return [
-          const DropdownOption(value: '230gr FMJ', label: '230 gr FMJ'),
-          const DropdownOption(value: '185gr HP', label: '185 gr HP'),
-        ];
-      default:
-      // For any caliber (including custom), show generic options
-        return [
-          const DropdownOption(value: 'FMJ', label: 'Full Metal Jacket'),
-          const DropdownOption(value: 'HP', label: 'Hollow Point'),
-          const DropdownOption(value: 'SP', label: 'Soft Point'),
-          const DropdownOption(value: 'HPBT', label: 'Hollow Point Boat Tail'),
-        ];
-    }
+    // Check if caliber is custom - pass empty string to show all bullet types
+    final filterCaliber = EnhancedDialogWidgets.isCustomValue(caliber) ? '' : caliber;
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.bulletTypes,
+        filterValue: filterCaliber,
+      ),
+    );
   }
 
   @override
@@ -174,10 +143,17 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
         _ammunitionBrands = options;
         _loadingBrands = false;
       });
-    } else if (_loadingCalibers) {
+    }
+    else if (_loadingCalibers) {
       setState(() {
         _calibers = options;
         _loadingCalibers = false;
+      });
+    }
+    else if (_loadingBulletTypes) {  // Add this condition
+      setState(() {
+        _bulletTypes = options;
+        _loadingBulletTypes = false;
       });
     }
   }
@@ -232,17 +208,21 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
             const SizedBox(height: AppSizes.fieldSpacing),
 
             // Bullet Type - suggestions based on caliber
-            if (_bulletTypes.isNotEmpty) ...[
-              CommonDialogWidgets.buildDropdownField(
+            if (_dropdownValues['caliber'] != null) ...[
+              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Bullet Weight & Type *',
                 value: _dropdownValues['bulletType'],
                 options: _bulletTypes,
                 onChanged: (value) {
                   setState(() => _dropdownValues['bulletType'] = value);
                   if (value != null) {
-                    _controllers['bullet']?.text = value;
+                    _controllers['bullet']?.text = EnhancedDialogWidgets.getDisplayValue(value);
                   }
                 },
+                customFieldLabel: 'Bullet Type',
+                customHintText: 'e.g., 77gr TMK, 168gr ELD-M',
+                isRequired: true,
+                isLoading: _loadingBulletTypes,
                 enabled: _dropdownValues['caliber'] != null,
               ),
               const SizedBox(height: AppSizes.fieldSpacing),

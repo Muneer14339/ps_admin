@@ -51,6 +51,12 @@ class GetDropdownOptionsUseCase implements UseCase<List<DropdownOption>, Dropdow
 
       case DropdownType.ammunitionBrands:
         return await repository.getAmmunitionBrands();
+
+    // 6. Add case in GetDropdownOptionsUseCase (get_dropdown_options_usecase.dart)
+      case DropdownType.bulletTypes:
+      // Show all bullet types if caliber is custom
+        final caliberFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
+        return await repository.getBulletTypes(caliberFilter);
     }
   }
 
