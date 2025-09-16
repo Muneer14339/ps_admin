@@ -122,10 +122,12 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     try {
       final firearmsData = await _getFirearmsData();
 
-      // If brand is empty, show all models
-      final filteredData = brand.isEmpty
-          ? firearmsData
-          : firearmsData.where((data) {
+      // Brand empty ہے تو کوئی models نہیں دکھانا
+      if (brand.isEmpty) {
+        return [];
+      }
+
+      final filteredData = firearmsData.where((data) {
         final matchesBrand = data['brand']?.toString() == brand;
         final matchesType = type == null || type.isEmpty ||
             data['type']?.toString().toLowerCase() == type.toLowerCase();
@@ -150,10 +152,12 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     try {
       final firearmsData = await _getFirearmsData();
 
-      // If brand or model is empty, show all generations
-      final filteredData = (brand.isEmpty || model.isEmpty)
-          ? firearmsData
-          : firearmsData.where((data) {
+      // Brand یا model empty ہے تو کوئی generations نہیں دکھانا
+      if (brand.isEmpty || model.isEmpty) {
+        return [];
+      }
+
+      final filteredData = firearmsData.where((data) {
         final matchesBrand = data['brand']?.toString() == brand;
         final matchesModel = data['model']?.toString() == model;
         final matchesType = type == null || type.isEmpty ||
