@@ -121,20 +121,14 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _dropdownValues['generation'] = null;
     });
 
-    if (EnhancedDialogWidgets.isCustomValue(brand)) {
-      // Custom brand کے لیے empty list return کریں
-      setState(() {
-        _loadingModels = false;
-      });
-    } else {
-      context.read<ArmoryBloc>().add(
-        LoadDropdownOptionsEvent(
-          type: DropdownType.firearmModels,
-          filterValue: brand,
-          secondaryFilter: selectedType,
-        ),
-      );
-    }
+    // Custom brand کے لیے بھی models load کریں
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmModels,
+        filterValue: brand, // Custom بھی pass کریں، backend handle کرے گا
+        secondaryFilter: selectedType,
+      ),
+    );
   }
 
   void _loadGenerationsForBrandModel(String brand, String model) {
@@ -144,21 +138,14 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       _dropdownValues['generation'] = null;
     });
 
-    if (EnhancedDialogWidgets.isCustomValue(brand) ||
-        EnhancedDialogWidgets.isCustomValue(model)) {
-      // Custom values کے لیے empty list return کریں
-      setState(() {
-        _loadingGenerations = false;
-      });
-    } else {
-      context.read<ArmoryBloc>().add(
-        LoadDropdownOptionsEvent(
-          type: DropdownType.firearmGenerations,
-          filterValue: brand,
-          secondaryFilter: model,
-        ),
-      );
-    }
+    // Custom values کے لیے بھی generations load کریں
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmGenerations,
+        filterValue: brand, // Custom بھی pass کریں
+        secondaryFilter: model, // Custom بھی pass کریں
+      ),
+    );
   }
 
   void _handleDropdownOptionsLoaded(List<DropdownOption> options) {

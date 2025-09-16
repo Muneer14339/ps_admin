@@ -1,5 +1,6 @@
 // lib/user_dashboard/data/datasources/armory_remote_datasource.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/armory_firearm_model.dart';
 import '../models/armory_ammunition_model.dart';
 import '../models/armory_gear_model.dart';
@@ -93,127 +94,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     _ammunitionCache = null;
   }
 
-  // Fixed dropdown options with proper filtering and caching
-  @override
-  Future<List<DropdownOption>> getFirearmBrands([String? type]) async {
-    try {
-      final firearmsData = await _getFirearmsData();
 
-      // Filter by type if provided and not empty
-      final filteredData = (type != null && type.isNotEmpty)
-          ? firearmsData.where((data) => data['type']?.toString().toLowerCase() == type.toLowerCase())
-          : firearmsData;
-
-      final brands = filteredData
-          .map((data) => data['brand']?.toString() ?? '')
-          .where((brand) => brand.isNotEmpty)
-          .toSet()
-          .toList();
-
-      brands.sort();
-      return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm brands: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getFirearmModels(String brand, [String? type]) async {
-    try {
-      final firearmsData = await _getFirearmsData();
-
-      // Brand empty ہے تو کوئی models نہیں دکھانا
-      if (brand.isEmpty) {
-        return [];
-      }
-
-      final filteredData = firearmsData.where((data) {
-        final matchesBrand = data['brand']?.toString() == brand;
-        final matchesType = type == null || type.isEmpty ||
-            data['type']?.toString().toLowerCase() == type.toLowerCase();
-        return matchesBrand && matchesType;
-      });
-
-      final models = filteredData
-          .map((data) => data['model']?.toString() ?? '')
-          .where((model) => model.isNotEmpty)
-          .toSet()
-          .toList();
-
-      models.sort();
-      return models.map((model) => DropdownOption(value: model, label: model)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm models: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getFirearmGenerations(String brand, String model, [String? type]) async {
-    try {
-      final firearmsData = await _getFirearmsData();
-
-      // Brand یا model empty ہے تو کوئی generations نہیں دکھانا
-      if (brand.isEmpty || model.isEmpty) {
-        return [];
-      }
-
-      final filteredData = firearmsData.where((data) {
-        final matchesBrand = data['brand']?.toString() == brand;
-        final matchesModel = data['model']?.toString() == model;
-        final matchesType = type == null || type.isEmpty ||
-            data['type']?.toString().toLowerCase() == type.toLowerCase();
-        return matchesBrand && matchesModel && matchesType;
-      });
-
-      final generations = filteredData
-          .map((data) => data['generation']?.toString() ?? '')
-          .where((gen) => gen.isNotEmpty)
-          .toSet()
-          .toList();
-
-      generations.sort();
-      return generations.map((gen) => DropdownOption(value: gen, label: gen)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm generations: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getCalibers([String? brand]) async {
-    try {
-      // Get calibers from both firearms and ammunition collections
-      final firearmsData = await _getFirearmsData();
-      final ammoData = await _getAmmunitionData();
-
-      final calibers = <String>{};
-
-      // Filter firearms by brand if provided and not empty
-      final filteredFirearms = (brand != null && brand.isNotEmpty)
-          ? firearmsData.where((data) => data['brand']?.toString() == brand)
-          : firearmsData;
-
-      // Filter ammunition by brand if provided and not empty
-      final filteredAmmo = (brand != null && brand.isNotEmpty)
-          ? ammoData.where((data) => data['brand']?.toString() == brand)
-          : ammoData;
-
-      for (final data in filteredFirearms) {
-        final caliber = data['caliber']?.toString() ?? '';
-        if (caliber.isNotEmpty) calibers.add(caliber);
-      }
-
-      for (final data in filteredAmmo) {
-        final caliber = data['caliber']?.toString() ?? '';
-        if (caliber.isNotEmpty) calibers.add(caliber);
-      }
-
-      final caliberList = calibers.toList();
-      caliberList.sort();
-      return caliberList.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
-    } catch (e) {
-      throw Exception('Failed to get calibers: $e');
-    }
-  }
 
   // Firearms CRUD operations remain the same...
   @override
@@ -515,6 +396,290 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
 
 
 
+  // User's personal armory data load کرنے کے لیے نئے methods
+  Future<List<Map<String, dynamic>>> _getUserFirearmsData() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) return [];
+
+      final querySnapshot = await firestore
+          .collection('armory')
+          .doc(currentUserId)
+          .collection('firearms')
+          .get();
+
+      return querySnapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      return []; // Error case میں empty list return کریں
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _getUserAmmunitionData() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) return [];
+
+      final querySnapshot = await firestore
+          .collection('armory')
+          .doc(currentUserId)
+          .collection('ammunition')
+          .get();
+
+      return querySnapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      return []; // Error case میں empty list return کریں
+    }
+  }
+
+// Helper method to merge and deduplicate data
+  List<String> _mergeAndDeduplicateStrings(
+      List<Map<String, dynamic>> referenceData,
+      List<Map<String, dynamic>> userData,
+      String field,
+      [String? filterField,
+        String? filterValue])
+  {
+
+    final allValues = <String>{};
+
+    // Reference data سے values نکالیں
+    for (final data in referenceData) {
+      if (filterField != null && filterValue != null) {
+        if (data[filterField]?.toString().toLowerCase() != filterValue.toLowerCase()) {
+          continue;
+        }
+      }
+      final value = data[field]?.toString() ?? '';
+      if (value.isNotEmpty) allValues.add(value);
+    }
+
+    // User data سے values نکالیں
+    for (final data in userData) {
+      if (filterField != null && filterValue != null) {
+        if (data[filterField]?.toString().toLowerCase() != filterValue.toLowerCase()) {
+          continue;
+        }
+      }
+      final value = data[field]?.toString() ?? '';
+      if (value.isNotEmpty) allValues.add(value);
+    }
+
+    final result = allValues.toList();
+    result.sort();
+    return result;
+  }
+
+// Updated dropdown methods
+  @override
+  Future<List<DropdownOption>> getFirearmBrands([String? type]) async {
+    try {
+      final referenceData = await _getFirearmsData();
+      final userData = await _getUserFirearmsData();
+
+      final brands = _mergeAndDeduplicateStrings(
+          referenceData,
+          userData,
+          'brand',
+          type?.isNotEmpty == true ? 'type' : null,
+          type
+      );
+
+      return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm brands: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getFirearmModels(String brand, [String? type]) async {
+    try {
+      final referenceData = await _getFirearmsData();
+      final userData = await _getUserFirearmsData();
+
+      final allValues = <String>{};
+
+      // اگر brand custom ہے یا empty ہے تو all models show کریں
+      if (brand.isEmpty || brand.startsWith('__CUSTOM__')) {
+        // All models from both sources
+        for (final data in [...referenceData, ...userData]) {
+          final matchesType = type == null || type.isEmpty ||
+              data['type']?.toString().toLowerCase() == type.toLowerCase();
+          if (matchesType) {
+            final model = data['model']?.toString() ?? '';
+            if (model.isNotEmpty) allValues.add(model);
+          }
+        }
+      } else {
+        // Specific brand کے models
+        final filteredRefData = referenceData.where((data) {
+          final matchesBrand = data['brand']?.toString() == brand;
+          final matchesType = type == null || type.isEmpty ||
+              data['type']?.toString().toLowerCase() == type.toLowerCase();
+          return matchesBrand && matchesType;
+        });
+
+        final filteredUserData = userData.where((data) {
+          final matchesBrand = data['brand']?.toString() == brand;
+          final matchesType = type == null || type.isEmpty ||
+              data['type']?.toString().toLowerCase() == type.toLowerCase();
+          return matchesBrand && matchesType;
+        });
+
+        for (final data in [...filteredRefData, ...filteredUserData]) {
+          final model = data['model']?.toString() ?? '';
+          if (model.isNotEmpty) allValues.add(model);
+        }
+      }
+
+      final models = allValues.toList();
+      models.sort();
+      return models.map((model) => DropdownOption(value: model, label: model)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm models: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getFirearmGenerations(String brand, String model, [String? type]) async {
+    try {
+      final referenceData = await _getFirearmsData();
+      final userData = await _getUserFirearmsData();
+
+      final allValues = <String>{};
+
+      // اگر brand یا model custom/empty ہے تو all generations show کریں
+      if (brand.isEmpty || model.isEmpty ||
+          brand.startsWith('__CUSTOM__') || model.startsWith('__CUSTOM__')) {
+        // All generations from both sources
+        for (final data in [...referenceData, ...userData]) {
+          final matchesType = type == null || type.isEmpty ||
+              data['type']?.toString().toLowerCase() == type.toLowerCase();
+          if (matchesType) {
+            final generation = data['generation']?.toString() ?? '';
+            if (generation.isNotEmpty) allValues.add(generation);
+          }
+        }
+      } else {
+        // Specific brand+model کے generations
+        final filteredRefData = referenceData.where((data) {
+          final matchesBrand = data['brand']?.toString() == brand;
+          final matchesModel = data['model']?.toString() == model;
+          final matchesType = type == null || type.isEmpty ||
+              data['type']?.toString().toLowerCase() == type.toLowerCase();
+          return matchesBrand && matchesModel && matchesType;
+        });
+
+        final filteredUserData = userData.where((data) {
+          final matchesBrand = data['brand']?.toString() == brand;
+          final matchesModel = data['model']?.toString() == model;
+          final matchesType = type == null || type.isEmpty ||
+              data['type']?.toString().toLowerCase() == type.toLowerCase();
+          return matchesBrand && matchesModel && matchesType;
+        });
+
+        for (final data in [...filteredRefData, ...filteredUserData]) {
+          final generation = data['generation']?.toString() ?? '';
+          if (generation.isNotEmpty) allValues.add(generation);
+        }
+      }
+
+      final generations = allValues.toList();
+      generations.sort();
+      return generations.map((gen) => DropdownOption(value: gen, label: gen)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm generations: $e');
+    }
+  }
+  @override
+  Future<List<DropdownOption>> getFirearmMakes([String? type]) async {
+    try {
+      final referenceData = await _getFirearmsData();
+      final userData = await _getUserFirearmsData();
+
+      final makes = _mergeAndDeduplicateStrings(
+          referenceData,
+          userData,
+          'make',
+          type?.isNotEmpty == true ? 'type' : null,
+          type
+      );
+
+      return makes.map((make) => DropdownOption(value: make, label: make)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm makes: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getCalibers([String? brand]) async {
+    try {
+      final firearmsRefData = await _getFirearmsData();
+      final ammoRefData = await _getAmmunitionData();
+      final userFirearmsData = await _getUserFirearmsData();
+      final userAmmoData = await _getUserAmmunitionData();
+
+      final calibers = <String>{};
+
+      // All sources سے calibers collect کریں
+      final allFirearmsData = [...firearmsRefData, ...userFirearmsData];
+      final allAmmoData = [...ammoRefData, ...userAmmoData];
+
+      // Filter by brand if provided
+      final filteredFirearms = (brand?.isNotEmpty == true)
+          ? allFirearmsData.where((data) => data['brand']?.toString() == brand)
+          : allFirearmsData;
+
+      final filteredAmmo = (brand?.isNotEmpty == true)
+          ? allAmmoData.where((data) => data['brand']?.toString() == brand)
+          : allAmmoData;
+
+      for (final data in [...filteredFirearms, ...filteredAmmo]) {
+        final caliber = data['caliber']?.toString() ?? '';
+        if (caliber.isNotEmpty) calibers.add(caliber);
+      }
+
+      final caliberList = calibers.toList();
+      caliberList.sort();
+      return caliberList.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
+    } catch (e) {
+      throw Exception('Failed to get calibers: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getAmmunitionBrands() async {
+    try {
+      final referenceData = await _getAmmunitionData();
+      final userData = await _getUserAmmunitionData();
+
+      final brands = _mergeAndDeduplicateStrings(referenceData, userData, 'brand');
+
+      return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
+    } catch (e) {
+      throw Exception('Failed to get ammunition brands: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getBulletTypes([String? caliber]) async {
+    try {
+      final referenceData = await _getAmmunitionData();
+      final userData = await _getUserAmmunitionData();
+
+      final bulletTypes = _mergeAndDeduplicateStrings(
+          referenceData,
+          userData,
+          'bullet weight (gr)',
+          caliber?.isNotEmpty == true ? 'caliber' : null,
+          caliber
+      );
+
+      return bulletTypes.map((bullet) => DropdownOption(value: bullet, label: bullet)).toList();
+    } catch (e) {
+      throw Exception('Failed to get bullet types: $e');
+    }
+  }
+
   @override
   Future<List<DropdownOption>> getFirearmFiringMechanisms([String? type]) async {
     try {
@@ -538,67 +703,5 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-  @override
-  Future<List<DropdownOption>> getFirearmMakes([String? type]) async {
-    try {
-      final firearmsData = await _getFirearmsData();
 
-      // Filter by type if provided and not empty
-      final filteredData = (type != null && type.isNotEmpty)
-          ? firearmsData.where((data) => data['type']?.toString().toLowerCase() == type.toLowerCase())
-          : firearmsData;
-
-      final makes = filteredData
-          .map((data) => data['make']?.toString() ?? '')
-          .where((make) => make.isNotEmpty)
-          .toSet()
-          .toList();
-
-      makes.sort();
-      return makes.map((make) => DropdownOption(value: make, label: make)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm makes: $e');
-    }
-  }
-
-
-  @override
-  Future<List<DropdownOption>> getAmmunitionBrands() async {
-    try {
-      final ammoData = await _getAmmunitionData();
-      final brands = ammoData
-          .map((data) => data['brand']?.toString() ?? '')
-          .where((brand) => brand.isNotEmpty)
-          .toSet()
-          .toList();
-
-      brands.sort();
-      return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
-    } catch (e) {
-      throw Exception('Failed to get ammunition brands: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getBulletTypes([String? caliber]) async {
-    try {
-      final ammoData = await _getAmmunitionData();
-
-      // Filter ammunition by caliber if provided and not empty
-      final filteredAmmo = (caliber != null && caliber.isNotEmpty)
-          ? ammoData.where((data) => data['caliber']?.toString() == caliber)
-          : ammoData;
-
-      final bullets = filteredAmmo
-          .map((data) => data['bullet weight (gr)']?.toString() ?? '')
-          .where((bullet) => bullet.isNotEmpty)
-          .toSet()
-          .toList();
-
-      bullets.sort();
-      return bullets.map((bullet) => DropdownOption(value: bullet, label: bullet)).toList();
-    } catch (e) {
-      throw Exception('Failed to get bullet types: $e');
-    }
-  }
 }
