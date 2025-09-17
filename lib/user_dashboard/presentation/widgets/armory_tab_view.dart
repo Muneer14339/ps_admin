@@ -67,9 +67,17 @@ class _ArmoryTabViewState extends State<ArmoryTabView> {
   Widget build(BuildContext context) {
     return Container(
       decoration: AppDecorations.pageDecoration,
-      child: SingleChildScrollView(
-        padding: AppSizes.pageMargin,
-        child: _buildTabContent(),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          _loadData(); // Re-fetch data for the active tab
+          // small delay so the refresh spinner is visible
+          await Future.delayed(const Duration(milliseconds: 400));
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: AppSizes.pageMargin,
+          child: _buildTabContent(),
+        ),
       ),
     );
   }
