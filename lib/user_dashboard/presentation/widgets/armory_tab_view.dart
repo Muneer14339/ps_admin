@@ -48,6 +48,7 @@ class _ArmoryTabViewState extends State<ArmoryTabView> {
         break;
       case ArmoryTabType.tools:
         bloc.add(LoadToolsEvent(userId: widget.userId));
+        bloc.add(LoadMaintenanceEvent(userId: widget.userId));
         break;
       case ArmoryTabType.loadouts:
         bloc.add(LoadLoadoutsEvent(userId: widget.userId));
