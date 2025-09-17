@@ -117,7 +117,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
           children: [
             CommonDialogWidgets.buildHeader(
               title: 'Add Ammunition',
-              badge: 'Smart + Custom',
+              badge: 'Level 1 UI',
               onClose: () => Navigator.of(context).pop(),
             ),
             Flexible(child: _buildForm()),

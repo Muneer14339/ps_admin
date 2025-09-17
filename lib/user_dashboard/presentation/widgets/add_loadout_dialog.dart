@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/entities/dropdown_option.dart';
+import '../../domain/entities/armory_firearm.dart';
+import '../../domain/entities/armory_ammunition.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
@@ -21,13 +23,19 @@ class AddLoadoutDialog extends StatefulWidget {
 class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
   final _formKey = GlobalKey<FormState>();
   final _controllers = <String, TextEditingController>{};
-  String? _firearm;
-  String? _ammunition;
+  String? _selectedFirearmId;
+  String? _selectedAmmunitionId;
+
+  List<DropdownOption> _firearmOptions = [];
+  List<DropdownOption> _ammunitionOptions = [];
+  bool _loadingFirearms = true;
+  bool _loadingAmmunition = true;
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
+    _loadData();
   }
 
   void _initializeControllers() {
@@ -35,6 +43,32 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
     for (final field in fields) {
       _controllers[field] = TextEditingController();
     }
+  }
+
+  void _loadData() {
+    // Load user's firearms and ammunition
+    context.read<ArmoryBloc>().add(LoadFirearmsEvent(userId: widget.userId));
+    context.read<ArmoryBloc>().add(LoadAmmunitionEvent(userId: widget.userId));
+  }
+
+  void _handleFirearmsLoaded(List<ArmoryFirearm> firearms) {
+    setState(() {
+      _firearmOptions = firearms.map((firearm) => DropdownOption(
+        value: firearm.id!,
+        label: '${firearm.nickname} (${firearm.make} ${firearm.model})',
+      )).toList();
+      _loadingFirearms = false;
+    });
+  }
+
+  void _handleAmmunitionLoaded(List<ArmoryAmmunition> ammunition) {
+    setState(() {
+      _ammunitionOptions = ammunition.map((ammo) => DropdownOption(
+        value: ammo.id!,
+        label: '${ammo.brand} ${ammo.caliber} ${ammo.bullet} (${ammo.quantity} rds)',
+      )).toList();
+      _loadingAmmunition = false;
+    });
   }
 
   @override
@@ -47,7 +81,11 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
   Widget build(BuildContext context) {
     return BlocListener<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
-        if (state is ArmoryActionSuccess) {
+        if (state is FirearmsLoaded) {
+          _handleFirearmsLoaded(state.firearms);
+        } else if (state is AmmunitionLoaded) {
+          _handleAmmunitionLoaded(state.ammunition);
+        } else if (state is ArmoryActionSuccess) {
           Navigator.of(context).pop();
         }
       },
@@ -83,35 +121,43 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
         key: _formKey,
         child: Column(
           children: [
+            // Loadout Name
             CommonDialogWidgets.buildTextField(
-              label: 'Name *',
+              label: 'Loadout Name *',
               controller: _controllers['name']!,
               isRequired: true,
-              hintText: 'e.g., Precision .308',
+              hintText: 'e.g., Precision .308, Competition Setup',
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Firearm Selection
             CommonDialogWidgets.buildDropdownField(
               label: 'Firearm',
-              value: _firearm,
-              options: [], // TODO: Load from user's firearms
-              onChanged: (value) => setState(() => _firearm = value),
+              value: _selectedFirearmId,
+              options: _firearmOptions,
+              onChanged: (value) => setState(() => _selectedFirearmId = value),
+              isLoading: _loadingFirearms,
+              enabled: !_loadingFirearms,
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Ammunition Selection
             CommonDialogWidgets.buildDropdownField(
               label: 'Ammunition',
-              value: _ammunition,
-              options: [], // TODO: Load from user's ammunition
-              onChanged: (value) => setState(() => _ammunition = value),
+              value: _selectedAmmunitionId,
+              options: _ammunitionOptions,
+              onChanged: (value) => setState(() => _selectedAmmunitionId = value),
+              isLoading: _loadingAmmunition,
+              enabled: !_loadingAmmunition,
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Notes
             CommonDialogWidgets.buildTextField(
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
-              hintText: 'Purpose, conditions, etc.',
+              hintText: 'Purpose, conditions, special setup notes, etc.',
             ),
           ],
         ),
@@ -122,11 +168,22 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
   void _saveLoadout() {
     if (!_formKey.currentState!.validate()) return;
 
+    final name = _controllers['name']?.text.trim() ?? '';
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Loadout name is required'),
+          backgroundColor: AppColors.errorColor,
+        ),
+      );
+      return;
+    }
+
     final loadout = ArmoryLoadout(
-      name: _controllers['name']?.text.trim() ?? '',
-      firearmId: _firearm,
-      ammunitionId: _ammunition,
-      gearIds: const [],
+      name: name,
+      firearmId: _selectedFirearmId,
+      ammunitionId: _selectedAmmunitionId,
+      gearIds: const [], // TODO: Add gear selection in future
       notes: _controllers['notes']?.text.trim(),
       dateAdded: DateTime.now(),
     );

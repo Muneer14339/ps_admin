@@ -225,7 +225,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
           children: [
             CommonDialogWidgets.buildHeader(
               title: 'Add Firearm',
-              badge: 'Smart + Custom',
+              badge: 'Level 1 UI',
               onClose: () => Navigator.of(context).pop(),
             ),
             Flexible(child: _buildForm()),
