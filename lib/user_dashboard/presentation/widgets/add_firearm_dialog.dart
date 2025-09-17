@@ -91,22 +91,61 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     );
   }
 
+  // Replace the _loadSecondaryOptionsForType method
   void _loadSecondaryOptionsForType(String type) {
+    // Load makes first
     setState(() {
       _loadingMakes = true;
-      _loadingMechanisms = true;
+      _loadingMechanisms = false; // Ensure this is false
     });
 
-    // Makes اور mechanisms الگ الگ load کریں
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(type: DropdownType.firearmMakes, filterValue: type),
     );
+  }
 
-    // Slight delay تاکہ overlap نہ ہو
-    Future.delayed(const Duration(milliseconds: 100), () {
-      context.read<ArmoryBloc>().add(
-        LoadDropdownOptionsEvent(type: DropdownType.firearmFiringMechanisms, filterValue: type),
-      );
+// Replace the _handleDropdownOptionsLoaded method
+  void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
+    setState(() {
+      if (_loadingBrands) {
+        _firearmBrands = options;
+        _loadingBrands = false;
+
+        // After brands loaded, load makes
+        final selectedType = _dropdownValues['type'];
+        if (selectedType != null) {
+          _loadSecondaryOptionsForType(selectedType);
+        }
+      }
+      else if (_loadingMakes) {
+        _firearmMakes = options;
+        _loadingMakes = false;
+
+        // After makes loaded, load mechanisms
+        setState(() => _loadingMechanisms = true);
+        context.read<ArmoryBloc>().add(
+          LoadDropdownOptionsEvent(
+              type: DropdownType.firearmFiringMechanisms,
+              filterValue: _dropdownValues['type']
+          ),
+        );
+      }
+      else if (_loadingMechanisms) {
+        _firearmMechanisms = options;
+        _loadingMechanisms = false;
+      }
+      else if (_loadingModels) {
+        _firearmModels = options;
+        _loadingModels = false;
+      }
+      else if (_loadingGenerations) {
+        _firearmGenerations = options;
+        _loadingGenerations = false;
+      }
+      else if (_loadingCalibers) {
+        _calibers = options;
+        _loadingCalibers = false;
+      }
     });
   }
 
@@ -148,40 +187,6 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     );
   }
 
-  void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
-    setState(() {
-      if (_loadingBrands) {
-        _firearmBrands = options;
-        _loadingBrands = false;
-
-        // Brands load ہونے کے بعد secondary options load کریں
-        final selectedType = _dropdownValues['type'];
-        if (selectedType != null) {
-          _loadSecondaryOptionsForType(selectedType);
-        }
-      }
-      else if (_loadingMakes) {
-        _firearmMakes = options;
-        _loadingMakes = false;
-      }
-      else if (_loadingMechanisms) {
-        _firearmMechanisms = options;
-        _loadingMechanisms = false;
-      }
-      else if (_loadingModels) {
-        _firearmModels = options;
-        _loadingModels = false;
-      }
-      else if (_loadingGenerations) {
-        _firearmGenerations = options;
-        _loadingGenerations = false;
-      }
-      else if (_loadingCalibers) {
-        _calibers = options;
-        _loadingCalibers = false;
-      }
-    });
-  }
 
   void _loadCalibersForBrand(String brand) {
     setState(() {
