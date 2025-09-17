@@ -26,7 +26,9 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
   final _dropdownValues = <String, String?>{};
 
   List<DropdownOption> _assetOptions = [];
-  bool _loadingAssets = false;
+  List<ArmoryFirearm> _allFirearms = [];
+  List<ArmoryGear> _allGear = [];
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -40,14 +42,10 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
     for (final field in fields) {
       _controllers[field] = TextEditingController();
     }
-
-    // Set default date to today
-    _dropdownValues['date'] = DateTime.now().toString().split(' ')[0];
     _controllers['rounds']?.text = '0';
   }
 
   void _loadInitialData() {
-    // Load firearms and gear for asset selection
     context.read<ArmoryBloc>().add(LoadFirearmsEvent(userId: widget.userId));
     context.read<ArmoryBloc>().add(LoadGearEvent(userId: widget.userId));
   }
@@ -56,30 +54,40 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
     setState(() {
       _dropdownValues['assetType'] = assetType;
       _dropdownValues['asset'] = null;
-      _assetOptions.clear();
+      _updateAssetOptions();
+    });
+  }
+
+  void _updateAssetOptions() {
+    setState(() {
+      if (_dropdownValues['assetType'] == 'firearm') {
+        _assetOptions = _allFirearms.map((firearm) => DropdownOption(
+          value: firearm.id!,
+          label: '${firearm.nickname} (${firearm.make} ${firearm.model})',
+        )).toList();
+      } else if (_dropdownValues['assetType'] == 'gear') {
+        _assetOptions = _allGear.map((gear) => DropdownOption(
+          value: gear.id!,
+          label: '${gear.model} (${gear.category})',
+        )).toList();
+      } else {
+        _assetOptions.clear();
+      }
     });
   }
 
   void _handleFirearmsLoaded(List<ArmoryFirearm> firearms) {
-    if (_dropdownValues['assetType'] == 'firearm') {
-      setState(() {
-        _assetOptions = firearms.map((firearm) => DropdownOption(
-          value: firearm.id!,
-          label: '${firearm.nickname} (${firearm.make} ${firearm.model})',
-        )).toList();
-      });
-    }
+    setState(() {
+      _allFirearms = firearms;
+      _updateAssetOptions();
+    });
   }
 
   void _handleGearLoaded(List<ArmoryGear> gear) {
-    if (_dropdownValues['assetType'] == 'gear') {
-      setState(() {
-        _assetOptions = gear.map((g) => DropdownOption(
-          value: g.id!,
-          label: '${g.model} (${g.category})',
-        )).toList();
-      });
-    }
+    setState(() {
+      _allGear = gear;
+      _updateAssetOptions();
+    });
   }
 
   @override
@@ -150,8 +158,7 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
                 options: _assetOptions,
                 onChanged: (value) => setState(() => _dropdownValues['asset'] = value),
                 isRequired: true,
-                enabled: _dropdownValues['assetType'] != null,
-                isLoading: _loadingAssets,
+                enabled: _dropdownValues['assetType'] != null && _assetOptions.isNotEmpty,
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -171,12 +178,7 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
                 onChanged: (value) => setState(() => _dropdownValues['maintenanceType'] = value),
                 isRequired: true,
               ),
-              CommonDialogWidgets.buildTextField(
-                label: 'Date',
-                controller: TextEditingController(text: _dropdownValues['date']),
-                hintText: DateTime.now().toString().split(' ')[0],
-                onChanged: (value) => _dropdownValues['date'] = value,
-              ),
+              _buildDatePickerField(),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
 
@@ -199,6 +201,60 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDatePickerField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Date', style: AppTextStyles.fieldLabel),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: _selectedDate,
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now().add(const Duration(days: 30)),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.dark(
+                      primary: AppColors.accentText,
+                      surface: AppColors.cardBackground,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (date != null) {
+              setState(() => _selectedDate = date);
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.inputBackground,
+              borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              border: Border.all(color: AppColors.primaryBorder),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                    style: const TextStyle(color: AppColors.primaryText, fontSize: 14),
+                  ),
+                ),
+                const Icon(Icons.calendar_today, color: AppColors.secondaryText, size: 16),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -231,7 +287,7 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
       assetType: _dropdownValues['assetType']!,
       assetId: _dropdownValues['asset']!,
       maintenanceType: _dropdownValues['maintenanceType']!,
-      date: DateTime.tryParse(_dropdownValues['date'] ?? '') ?? DateTime.now(),
+      date: _selectedDate,
       roundsFired: int.tryParse(_controllers['rounds']?.text.trim() ?? '0'),
       notes: _controllers['notes']?.text.trim(),
       dateAdded: DateTime.now(),
