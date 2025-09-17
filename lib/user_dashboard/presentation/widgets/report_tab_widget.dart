@@ -122,6 +122,42 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     );
   }
 
+  // Helper methods to resolve IDs to names
+  String _getFirearmName(String? firearmId) {
+    if (firearmId == null || firearmId.isEmpty) return '';
+    try {
+      final firearm = _firearms.firstWhere((f) => f.id == firearmId);
+      return firearm.nickname.isNotEmpty ? firearm.nickname : '${firearm.make} ${firearm.model}';
+    } catch (e) {
+      return 'Unknown Firearm';
+    }
+  }
+
+  String _getAmmunitionName(String? ammunitionId) {
+    if (ammunitionId == null || ammunitionId.isEmpty) return '';
+    try {
+      final ammo = _ammunition.firstWhere((a) => a.id == ammunitionId);
+      return '${ammo.brand} ${ammo.caliber} ${ammo.bullet}';
+    } catch (e) {
+      return 'Unknown Ammo';
+    }
+  }
+
+  String _getAssetName(String assetType, String assetId) {
+    if (assetType == 'firearm') {
+      return _getFirearmName(assetId);
+    } else if (assetType == 'gear') {
+      try {
+        final gear = _gear.firstWhere((g) => g.id == assetId);
+        return gear.model;
+      } catch (e) {
+        return 'Unknown Gear';
+      }
+    }
+    return 'Unknown Asset';
+  }
+
+
   Widget _buildReportHeader() {
     return CommonWidgets.buildPageHeader(
       title: 'Inventory Report',
@@ -300,7 +336,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
         return DataRow(
           cells: [
             DataCell(SizedBox(width: 80, child: Text('${maint.date.day}/${maint.date.month}/${maint.date.year}'))),
-            DataCell(SizedBox(width: 100, child: Text(maint.assetId, overflow: TextOverflow.ellipsis))),
+            DataCell(SizedBox(width: 120, child: Text(_getAssetName(maint.assetType, maint.assetId), overflow: TextOverflow.ellipsis))),
             DataCell(SizedBox(width: 80, child: Text(maint.maintenanceType, overflow: TextOverflow.ellipsis))),
             DataCell(SizedBox(width: 60, child: Text('${maint.roundsFired ?? 0}'))),
             DataCell(SizedBox(width: 100, child: Text(maint.notes ?? '', overflow: TextOverflow.ellipsis))),
@@ -324,8 +360,8 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
         return DataRow(
           cells: [
             DataCell(SizedBox(width: 100, child: Text(loadout.name, overflow: TextOverflow.ellipsis))),
-            DataCell(SizedBox(width: 80, child: Text(loadout.firearmId ?? '', overflow: TextOverflow.ellipsis))),
-            DataCell(SizedBox(width: 80, child: Text(loadout.ammunitionId ?? '', overflow: TextOverflow.ellipsis))),
+            DataCell(SizedBox(width: 120, child: Text(_getFirearmName(loadout.firearmId), overflow: TextOverflow.ellipsis))),
+            DataCell(SizedBox(width: 120, child: Text(_getAmmunitionName(loadout.ammunitionId), overflow: TextOverflow.ellipsis))),
             DataCell(SizedBox(width: 60, child: Text('${loadout.gearIds.length} items'))),
             DataCell(SizedBox(width: 100, child: Text(loadout.notes ?? '', overflow: TextOverflow.ellipsis))),
           ],
