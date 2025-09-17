@@ -94,19 +94,34 @@ class AddLoadoutEvent extends ArmoryEvent {
 }
 
 // Dropdown Events
+// lib/user_dashboard/presentation/bloc/armory_event.dart - Update LoadDropdownOptionsEvent
+
 class LoadDropdownOptionsEvent extends ArmoryEvent {
   final DropdownType type;
   final String? filterValue;
   final String? secondaryFilter;
+  final String? tertiaryFilter;    // Add this
+  final String? quaternaryFilter;  // Add this
+  final String? quinaryFilter;     // Add this
 
   const LoadDropdownOptionsEvent({
     required this.type,
     this.filterValue,
     this.secondaryFilter,
+    this.tertiaryFilter,    // Add this
+    this.quaternaryFilter,  // Add this
+    this.quinaryFilter,     // Add this
   });
 
   @override
-  List<Object> get props => [type, filterValue ?? '', secondaryFilter ?? ''];
+  List<Object> get props => [
+    type,
+    filterValue ?? '',
+    secondaryFilter ?? '',
+    tertiaryFilter ?? '',     // Add this
+    quaternaryFilter ?? '',   // Add this
+    quinaryFilter ?? '',      // Add this
+  ];
 }
 
 class LoadMaintenanceEvent extends ArmoryEvent {

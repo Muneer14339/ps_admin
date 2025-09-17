@@ -1,5 +1,7 @@
-// lib/user_dashboard/domain/usecases/get_dropdown_options_usecase.dart
+// lib/user_dashboard/domain/usecases/get_dropdown_options_usecase.dart - Update call method
+
 import 'package:dartz/dartz.dart';
+
 import '../../../core/error/failures.dart';
 import '../../../core/usecases/usecase.dart';
 import '../entities/dropdown_option.dart';
@@ -14,14 +16,12 @@ class GetDropdownOptionsUseCase implements UseCase<List<DropdownOption>, Dropdow
   Future<Either<Failure, List<DropdownOption>>> call(DropdownParams params) async {
     switch (params.type) {
       case DropdownType.firearmBrands:
-      // Pass type filter only if not custom
         final typeFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
         return await repository.getFirearmBrands(typeFilter);
 
       case DropdownType.firearmModels:
-      // Show all models if brand is custom
         if (_isCustomValue(params.filterValue)) {
-          return await repository.getFirearmModels('', null); // No filtering
+          return await repository.getFirearmModels('', null);
         }
         return await repository.getFirearmModels(
             params.filterValue ?? '',
@@ -29,43 +29,47 @@ class GetDropdownOptionsUseCase implements UseCase<List<DropdownOption>, Dropdow
         );
 
       case DropdownType.firearmGenerations:
-      // Show all generations if brand or model is custom
         if (_isCustomValue(params.filterValue) || _isCustomValue(params.secondaryFilter)) {
-          return await repository.getFirearmGenerations('', '', null); // No filtering
+          return await repository.getFirearmGenerations('', '', null);
         }
         return await repository.getFirearmGenerations(
           params.filterValue ?? '',
           params.secondaryFilter ?? '',
         );
 
+      case DropdownType.calibers:
+        return await repository.getCalibers(
+            _isCustomValue(params.filterValue) ? null : params.filterValue,      // brand
+            _isCustomValue(params.secondaryFilter) ? null : params.secondaryFilter,  // model
+            _isCustomValue(params.tertiaryFilter) ? null : params.tertiaryFilter     // generation
+        );
+
       case DropdownType.firearmFiringMechanisms:
-      // Pass type filter only if not custom
-        final typeFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
-        return await repository.getFirearmFiringMechanisms(typeFilter);
+        return await repository.getFirearmFiringMechanisms(
+            _isCustomValue(params.filterValue) ? null : params.filterValue,      // type
+            _isCustomValue(params.secondaryFilter) ? null : params.secondaryFilter  // caliber
+        );
 
       case DropdownType.firearmMakes:
-      // Pass type filter only if not custom
-        final typeFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
-        return await repository.getFirearmMakes(typeFilter);
-
-      case DropdownType.calibers:
-      // Show all calibers if brand is custom
-        final brandFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
-        return await repository.getCalibers(brandFilter);
+        return await repository.getFirearmMakes(
+            _isCustomValue(params.filterValue) ? null : params.filterValue,          // type
+            _isCustomValue(params.secondaryFilter) ? null : params.secondaryFilter,      // brand
+            _isCustomValue(params.tertiaryFilter) ? null : params.tertiaryFilter,        // model
+            _isCustomValue(params.quaternaryFilter) ? null : params.quaternaryFilter,    // generation
+            _isCustomValue(params.quinaryFilter) ? null : params.quinaryFilter          // caliber
+        );
 
       case DropdownType.ammunitionBrands:
         return await repository.getAmmunitionBrands();
 
-    // 6. Add case in GetDropdownOptionsUseCase (get_dropdown_options_usecase.dart)
       case DropdownType.bulletTypes:
-      // Show all bullet types if caliber is custom
         final caliberFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
         return await repository.getBulletTypes(caliberFilter);
     }
   }
 
-  // Helper method to check if value is custom
   bool _isCustomValue(String? value) {
+
     return value != null && value.startsWith('__CUSTOM__');
   }
 }

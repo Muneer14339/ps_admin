@@ -41,12 +41,24 @@ abstract class ArmoryRepository {
   Future<Either<Failure, void>> deleteLoadout(String userId, String loadoutId);
 
   // Dropdown options with filtering support
+  // Updated dropdown options with enhanced filtering support
   Future<Either<Failure, List<DropdownOption>>> getFirearmBrands([String? type]);
-  Future<Either<Failure, List<DropdownOption>>> getFirearmModels(String brand, [String? type]);
-  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(String brand, String model, [String? type]);
-  Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms([String? type]);
-  Future<Either<Failure, List<DropdownOption>>> getFirearmMakes([String? type]);
-  Future<Either<Failure, List<DropdownOption>>> getCalibers([String? brand]);
+
+  Future<Either<Failure, List<DropdownOption>>> getFirearmModels(
+       [String? brand,String? type]);
+
+  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(
+       [String? brand, String? model,String? type]);
+
+  Future<Either<Failure, List<DropdownOption>>> getCalibers([
+    String? brand, String? model, String? generation]);
+
+  Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms([
+    String? type, String? caliber]);
+
+  Future<Either<Failure, List<DropdownOption>>> getFirearmMakes([
+    String? type, String? brand, String? model, String? generation, String? caliber]);
+
   Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands();
   Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? caliber]);
 

@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
 import '../../user_dashboard/domain/entities/armory_ammunition.dart';
 import '../../user_dashboard/domain/entities/armory_firearm.dart';
 import '../../user_dashboard/domain/entities/armory_gear.dart';
@@ -68,16 +69,34 @@ class AddMaintenanceParams {
   AddMaintenanceParams({required this.userId, required this.maintenance});
 }
 
-class DropdownParams {
+// lib/core/usecases/usecase.dart - Add to existing file
+
+class DropdownParams extends Equatable {
   final DropdownType type;
   final String? filterValue;
   final String? secondaryFilter;
+  final String? tertiaryFilter;  // Add this
+  final String? quaternaryFilter;  // Add this
+  final String? quinaryFilter;  // Add this
 
-  DropdownParams({
+  const DropdownParams({
     required this.type,
     this.filterValue,
     this.secondaryFilter,
+    this.tertiaryFilter,    // Add this
+    this.quaternaryFilter,  // Add this
+    this.quinaryFilter,     // Add this
   });
+
+  @override
+  List<Object> get props => [
+    type,
+    filterValue ?? '',
+    secondaryFilter ?? '',
+    tertiaryFilter ?? '',     // Add this
+    quaternaryFilter ?? '',   // Add this
+    quinaryFilter ?? '',      // Add this
+  ];
 }
 
 enum DropdownType {

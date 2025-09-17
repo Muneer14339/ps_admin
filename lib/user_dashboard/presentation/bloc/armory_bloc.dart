@@ -208,6 +208,9 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
         type: event.type,
         filterValue: event.filterValue,
         secondaryFilter: event.secondaryFilter,
+        tertiaryFilter: event.tertiaryFilter,       // Add this
+        quaternaryFilter: event.quaternaryFilter,   // Add this
+        quinaryFilter: event.quinaryFilter,         // Add this
       ),
     );
 

@@ -48,6 +48,175 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     _initializeControllers();
   }
 
+  void _loadBrandsForType(String type) {
+    setState(() {
+      _loadingBrands = true;
+      _clearAllDependentDropdowns();
+    });
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(type: DropdownType.firearmBrands, filterValue: type),
+    );
+  }
+
+  void _loadModelsForBrand(String brand) {
+    setState(() {
+      _loadingModels = true;
+      _firearmModels.clear();
+      _clearDependentDropdowns(['model', 'generation', 'caliber', 'firingMechanism', 'make']);
+    });
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmModels,
+        filterValue: _dropdownValues['brand'],
+        secondaryFilter: _dropdownValues['type'],
+      ),
+    );
+  }
+
+  void _loadGenerationsForModel(String model) {
+    setState(() {
+      _loadingGenerations = true;
+      _firearmGenerations.clear();
+      _clearDependentDropdowns(['generation', 'caliber', 'firingMechanism', 'make']);
+    });
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmGenerations,
+        filterValue: _dropdownValues['brand'],
+        secondaryFilter: _dropdownValues['model'],
+      ),
+    );
+  }
+
+  void _loadCalibersForSelection() {
+    setState(() {
+      _loadingCalibers = true;
+      _calibers.clear();
+      _clearDependentDropdowns(['caliber', 'firingMechanism', 'make']);
+    });
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.calibers,
+        filterValue: _dropdownValues['brand'],        // brand
+        secondaryFilter: _dropdownValues['model'],    // model
+        tertiaryFilter: _dropdownValues['generation'], // generation
+      ),
+    );
+  }
+
+  void _loadFiringMechanismsForSelection() {
+    setState(() {
+      _loadingMechanisms = true;
+      _firearmMechanisms.clear();
+      _clearDependentDropdowns(['firingMechanism', 'make']);
+    });
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmFiringMechanisms,
+        filterValue: _dropdownValues['type'],         // type
+        secondaryFilter: _dropdownValues['caliber'],  // caliber
+      ),
+    );
+  }
+
+  void _loadMakesForSelection() {
+    setState(() {
+      _loadingMakes = true;
+      _firearmMakes.clear();
+      _dropdownValues['make'] = null;
+    });
+
+    context.read<ArmoryBloc>().add(
+      LoadDropdownOptionsEvent(
+        type: DropdownType.firearmMakes,
+        filterValue: _dropdownValues['type'],           // type
+        secondaryFilter: _dropdownValues['brand'],      // brand
+        tertiaryFilter: _dropdownValues['model'],       // model
+        quaternaryFilter: _dropdownValues['generation'], // generation
+        quinaryFilter: _dropdownValues['caliber'],      // caliber
+      ),
+    );
+  }
+
+  void _clearAllDependentDropdowns() {
+    _firearmBrands.clear();
+    _firearmModels.clear();
+    _firearmGenerations.clear();
+    _firearmMakes.clear();
+    _firearmMechanisms.clear();
+    _calibers.clear();
+
+    _dropdownValues['brand'] = null;
+    _dropdownValues['model'] = null;
+    _dropdownValues['generation'] = null;
+    _dropdownValues['make'] = null;
+    _dropdownValues['firingMechanism'] = null;
+    _dropdownValues['caliber'] = null;
+  }
+
+  void _clearDependentDropdowns(List<String> fields) {
+    for (final field in fields) {
+      _dropdownValues[field] = null;
+
+      switch (field) {
+        case 'model':
+          _firearmModels.clear();
+          break;
+        case 'generation':
+          _firearmGenerations.clear();
+          break;
+        case 'caliber':
+          _calibers.clear();
+          break;
+        case 'firingMechanism':
+          _firearmMechanisms.clear();
+          break;
+        case 'make':
+          _firearmMakes.clear();
+          break;
+      }
+    }
+  }
+
+  // Update onChanged handlers in your form fields
+  void _onBrandChanged(String? value) {
+    setState(() => _dropdownValues['brand'] = value);
+    if (value != null) {
+      _loadModelsForBrand(value);
+    }
+  }
+
+  void _onModelChanged(String? value) {
+    setState(() => _dropdownValues['model'] = value);
+    if (value != null && _dropdownValues['brand'] != null) {
+      _loadGenerationsForModel(value);
+    }
+  }
+
+  void _onGenerationChanged(String? value) {
+    setState(() => _dropdownValues['generation'] = value);
+    _loadCalibersForSelection(); // Load calibers when generation is selected/changed
+  }
+
+  void _onCaliberChanged(String? value) {
+    setState(() => _dropdownValues['caliber'] = value);
+    if (value != null) {
+      _loadFiringMechanismsForSelection();
+    }
+  }
+
+  void _onFiringMechanismChanged(String? value) {
+    setState(() => _dropdownValues['firingMechanism'] = value);
+    _loadMakesForSelection(); // Load makes when firing mechanism is selected/changed
+  }
+
+
+
   void _initializeControllers() {
     final fields = ['make', 'model', 'nickname', 'serial', 'notes'];
 
@@ -59,37 +228,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     _dropdownValues['condition'] = 'good';
   }
 
-  void _loadBrandsForType(String type) {
-    setState(() {
-      _loadingBrands = true;
-      // باقی loading states false کریں
-      _loadingModels = false;
-      _loadingGenerations = false;
-      _loadingMakes = false;
-      _loadingMechanisms = false;
 
-      // Clear all dependent dropdowns
-      _firearmBrands.clear();
-      _firearmModels.clear();
-      _firearmGenerations.clear();
-      _firearmMakes.clear();
-      _firearmMechanisms.clear();
-      _calibers.clear();
-
-      // Clear all dependent values
-      _dropdownValues['brand'] = null;
-      _dropdownValues['model'] = null;
-      _dropdownValues['generation'] = null;
-      _dropdownValues['make'] = null;
-      _dropdownValues['firingMechanism'] = null;
-      _dropdownValues['caliber'] = null;
-    });
-
-    // صرف brands load کریں پہلے
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(type: DropdownType.firearmBrands, filterValue: type),
-    );
-  }
 
   // Replace the _loadSecondaryOptionsForType method
   void _loadSecondaryOptionsForType(String type) {
@@ -149,26 +288,6 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     });
   }
 
-  void _loadModelsForBrand(String brand) {
-    final selectedType = _dropdownValues['type'];
-
-    setState(() {
-      _loadingModels = true;
-      _firearmModels.clear();
-      _firearmGenerations.clear();
-      _dropdownValues['model'] = null;
-      _dropdownValues['generation'] = null;
-    });
-
-    // Custom brand کے لیے بھی models load کریں
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.firearmModels,
-        filterValue: brand, // Custom بھی pass کریں، backend handle کرے گا
-        secondaryFilter: selectedType,
-      ),
-    );
-  }
 
   void _loadGenerationsForBrandModel(String brand, String model) {
     setState(() {
@@ -278,13 +397,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               label: 'Brand *',
               value: _dropdownValues['brand'],
               options: _firearmBrands,
-              onChanged: (value) {
-                setState(() => _dropdownValues['brand'] = value);
-                if (value != null) {
-                  _loadModelsForBrand(value);
-                  _loadCalibersForBrand(value); // Load calibers when brand is selected
-                }
-              },
+              onChanged: _onBrandChanged,
               customFieldLabel: 'Brand',
               customHintText: 'e.g., Custom Manufacturer',
               isRequired: true,
@@ -298,12 +411,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               label: 'Model *',
               value: _dropdownValues['model'],
               options: _firearmModels,
-              onChanged: (value) {
-                setState(() => _dropdownValues['model'] = value);
-                if (value != null && _dropdownValues['brand'] != null) {
-                  _loadGenerationsForBrandModel(_dropdownValues['brand']!, value);
-                }
-              },
+              onChanged: _onModelChanged,
               customFieldLabel: 'Model',
               customHintText: 'e.g., Custom Model Name',
               isRequired: true,
@@ -317,7 +425,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               label: 'Generation',
               value: _dropdownValues['generation'],
               options: _firearmGenerations,
-              onChanged: (value) => setState(() => _dropdownValues['generation'] = value),
+              onChanged: _onGenerationChanged,
               customFieldLabel: 'Generation',
               customHintText: 'e.g., Gen 5, Mk II',
               isLoading: _loadingGenerations,
@@ -328,30 +436,41 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
             // Make and Caliber - with custom options
             CommonDialogWidgets.buildResponsiveRow([
               EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-                label: 'Make *',
-                value: _dropdownValues['make'],
-                options: _firearmMakes,
-                onChanged: (value) => setState(() => _dropdownValues['make'] = value),
-                customFieldLabel: 'Make',
-                customHintText: 'e.g., Custom Make',
-                isRequired: true,
-                isLoading: _loadingMakes,
-                enabled: _dropdownValues['type'] != null,
-              ),
-              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Caliber *',
                 value: _dropdownValues['caliber'],
                 options: _calibers,
-                onChanged: (value) => setState(() => _dropdownValues['caliber'] = value),
+                onChanged: _onCaliberChanged,
                 customFieldLabel: 'Caliber',
                 customHintText: 'e.g., .300 WinMag',
                 isRequired: true,
                 isLoading: _loadingCalibers,
                 enabled: _dropdownValues['brand'] != null, // Only enable when brand is selected
               ),
+              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+                label: 'Firing Mechanism',
+                value: _dropdownValues['firingMechanism'],
+                options: _firearmMechanisms,
+                onChanged: _onFiringMechanismChanged,
+                customFieldLabel: 'Firing Mechanism',
+                customHintText: 'e.g., Custom Action',
+                isLoading: _loadingMechanisms,
+                enabled: _dropdownValues['type'] != null,
+              ),
+
+
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
-
+            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+              label: 'Make *',
+              value: _dropdownValues['make'],
+              options: _firearmMakes,
+              onChanged: (value) => setState(() => _dropdownValues['make'] = value),
+              customFieldLabel: 'Make',
+              customHintText: 'e.g., Custom Make',
+              isRequired: true,
+              isLoading: _loadingMakes,
+              enabled: _dropdownValues['type'] != null,
+            ),
             // Nickname and Firing Mechanism
             CommonDialogWidgets.buildResponsiveRow([
               CommonDialogWidgets.buildTextField(
@@ -360,16 +479,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 isRequired: true,
                 maxLength: 20, // Add this
               ),
-              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-                label: 'Firing Mechanism',
-                value: _dropdownValues['firingMechanism'],
-                options: _firearmMechanisms,
-                onChanged: (value) => setState(() => _dropdownValues['firingMechanism'] = value),
-                customFieldLabel: 'Firing Mechanism',
-                customHintText: 'e.g., Custom Action',
-                isLoading: _loadingMechanisms,
-                enabled: _dropdownValues['type'] != null,
-              ),
+
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
 
