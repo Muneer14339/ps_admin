@@ -102,6 +102,7 @@ class _AddGearDialogState extends State<AddGearDialog> {
               label: 'Model/Name *',
               controller: _controllers['model']!,
               isRequired: true,
+              maxLength: 30, // Add this
               hintText: 'e.g., Vortex Razor HD',
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -110,8 +111,10 @@ class _AddGearDialogState extends State<AddGearDialog> {
               CommonDialogWidgets.buildTextField(
                 label: 'Serial Number',
                 controller: _controllers['serial']!,
+                maxLength: 20, // Add this
                 hintText: 'Optional',
               ),
+
               CommonDialogWidgets.buildTextField(
                 label: 'Quantity',
                 controller: _controllers['quantity']!,
@@ -124,6 +127,7 @@ class _AddGearDialogState extends State<AddGearDialog> {
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
+              maxLength: 200, // Add this
               hintText: 'Details about this gear',
             ),
           ],

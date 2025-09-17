@@ -53,17 +53,20 @@ class CommonDialogWidgets {
     );
   }
 
+  // Update this method in dialog_widgets.dart
   static Widget buildTextField({
     required String label,
     required TextEditingController controller,
     bool isRequired = false,
     int maxLines = 1,
+    int? maxLength, // Add this parameter
     String? hintText,
     TextInputType keyboardType = TextInputType.text,
     bool enabled = true,
     String? Function(String?)? validator,
     void Function(String)? onChanged,
-  }) {
+  })
+  {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -72,6 +75,7 @@ class CommonDialogWidgets {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
+          maxLength: maxLength, // Add this line
           keyboardType: keyboardType,
           enabled: enabled,
           style: TextStyle(
@@ -87,15 +91,23 @@ class CommonDialogWidgets {
             if (value == null || value.trim().isEmpty) {
               return '${label.replaceAll('*', '').trim()} is required';
             }
+            // Add length validation
+            if (maxLength != null && value.trim().length > maxLength) {
+              return '${label.replaceAll('*', '').trim()} must be ${maxLength} characters or less';
+            }
             return null;
           }
-              : null),
+              : maxLength != null ? (value) {
+            if (value != null && value.trim().length > maxLength) {
+              return '${label.replaceAll('*', '').trim()} must be ${maxLength} characters or less';
+            }
+            return null;
+          } : null),
           onChanged: onChanged,
         ),
       ],
     );
   }
-
   static Widget buildDropdownField({
     required String label,
     required String? value,

@@ -56,6 +56,7 @@ class _CustomValueDialogState extends State<CustomValueDialog> {
     );
   }
 
+  // Update this method in custom_value_dialog.dart _buildForm method
   Widget _buildForm() {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.dialogPadding),
@@ -65,6 +66,7 @@ class _CustomValueDialogState extends State<CustomValueDialog> {
           label: widget.fieldLabel,
           controller: _controller,
           isRequired: true,
+          maxLength: 30, // Add character limit for custom values
           hintText: widget.hintText,
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
@@ -72,6 +74,9 @@ class _CustomValueDialogState extends State<CustomValueDialog> {
             }
             if (value.trim().length < 2) {
               return '${widget.fieldLabel} must be at least 2 characters';
+            }
+            if (value.trim().length > 30) {
+              return '${widget.fieldLabel} must be 30 characters or less';
             }
             return null;
           },

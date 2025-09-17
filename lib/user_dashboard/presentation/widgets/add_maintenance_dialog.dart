@@ -196,6 +196,7 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
+              maxLength: 200, // Add this
               hintText: 'Details of maintenance performed',
             ),
           ],

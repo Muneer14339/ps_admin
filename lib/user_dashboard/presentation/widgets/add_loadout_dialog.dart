@@ -126,6 +126,7 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
               label: 'Loadout Name *',
               controller: _controllers['name']!,
               isRequired: true,
+              maxLength: 25, // Add this
               hintText: 'e.g., Precision .308, Competition Setup',
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -157,6 +158,7 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
+              maxLength: 200, // Add this
               hintText: 'Purpose, conditions, special setup notes, etc.',
             ),
           ],

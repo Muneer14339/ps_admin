@@ -87,6 +87,7 @@ class _AddToolDialogState extends State<AddToolDialog> {
               label: 'Name *',
               controller: _controllers['name']!,
               isRequired: true,
+              maxLength: 30, // Add this
               hintText: 'e.g., Wheeler FAT Wrench',
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -116,6 +117,7 @@ class _AddToolDialogState extends State<AddToolDialog> {
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
+              maxLength: 200, // Add this
               hintText: 'Details about this tool',
             ),
           ],

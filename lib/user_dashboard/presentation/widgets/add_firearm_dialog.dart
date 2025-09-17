@@ -353,6 +353,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
                 label: 'Nickname/Identifier *',
                 controller: _controllers['nickname']!,
                 isRequired: true,
+                maxLength: 20, // Add this
               ),
               EnhancedDialogWidgets.buildDropdownFieldWithCustom(
                 label: 'Firing Mechanism',
@@ -383,6 +384,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               CommonDialogWidgets.buildTextField(
                 label: 'Serial Number',
                 controller: _controllers['serial']!,
+                maxLength: 20, // Add this
               ),
             ]),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -392,6 +394,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
+              maxLength: 200, // Add this for notes
               hintText: 'Purpose, setup, special considerations, etc.',
             ),
           ],

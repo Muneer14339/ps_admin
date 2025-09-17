@@ -186,6 +186,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
             CommonDialogWidgets.buildTextField(
               label: 'Product Line',
               controller: _controllers['line']!,
+              maxLength: 20, // Add this
               hintText: 'e.g., Gold Medal Match, V-Max',
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -256,6 +257,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
             CommonDialogWidgets.buildTextField(
               label: 'Lot Number',
               controller: _controllers['lot']!,
+              maxLength: 15, // Add this
               hintText: 'ABC1234',
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
@@ -265,6 +267,7 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
+              maxLength: 200, // Add this
               hintText: 'Performance notes, accuracy data, etc.',
             ),
           ],
