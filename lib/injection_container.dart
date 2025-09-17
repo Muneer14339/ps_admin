@@ -29,12 +29,14 @@ import 'admin_dashboard/presentation/bloc/file_upload_bloc.dart';
 import 'user_dashboard/data/datasources/armory_remote_datasource.dart';
 import 'user_dashboard/data/repositories/armory_repository_impl.dart';
 import 'user_dashboard/domain/repositories/armory_repository.dart';
+import 'user_dashboard/domain/usecases/add_maintenance_usecase.dart';
 import 'user_dashboard/domain/usecases/get_firearms_usecase.dart' as user_firearms;
 import 'user_dashboard/domain/usecases/add_firearm_usecase.dart';
 import 'user_dashboard/domain/usecases/get_ammunition_usecase.dart' as user_ammo;
 import 'user_dashboard/domain/usecases/add_ammunition_usecase.dart' as user_add_ammo;
 import 'user_dashboard/domain/usecases/get_gear_usecase.dart';
 import 'user_dashboard/domain/usecases/add_gear_usecase.dart';
+import 'user_dashboard/domain/usecases/get_maintenance_usecase.dart';
 import 'user_dashboard/domain/usecases/get_tools_usecase.dart';
 import 'user_dashboard/domain/usecases/add_tool_usecase.dart';
 import 'user_dashboard/domain/usecases/get_loadouts_usecase.dart';
@@ -84,6 +86,8 @@ Future<void> init() async {
       getLoadoutsUseCase: sl(),
       addLoadoutUseCase: sl(),
       getDropdownOptionsUseCase: sl(),
+          getMaintenanceUseCase: sl(),
+          addMaintenanceUseCase: sl(),
     ),
   );
 
@@ -111,6 +115,9 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetLoadoutsUseCase(sl<ArmoryRepository>()));
   sl.registerLazySingleton(() => AddLoadoutUseCase(sl<ArmoryRepository>()));
   sl.registerLazySingleton(() => GetDropdownOptionsUseCase(sl<ArmoryRepository>()));
+  // Use cases
+  sl.registerLazySingleton(() => GetMaintenanceUseCase(sl<ArmoryRepository>()));
+  sl.registerLazySingleton(() => AddMaintenanceUseCase(sl<ArmoryRepository>()));
 
   // Repository - Authentication
   sl.registerLazySingleton<AuthRepository>(

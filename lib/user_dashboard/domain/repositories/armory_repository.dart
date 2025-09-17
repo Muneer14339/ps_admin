@@ -4,6 +4,7 @@ import '../../../core/error/failures.dart';
 import '../entities/armory_firearm.dart';
 import '../entities/armory_ammunition.dart';
 import '../entities/armory_gear.dart';
+import '../entities/armory_maintenance.dart';
 import '../entities/armory_tool.dart';
 import '../entities/armory_loadout.dart';
 import '../entities/dropdown_option.dart';
@@ -48,4 +49,8 @@ abstract class ArmoryRepository {
   Future<Either<Failure, List<DropdownOption>>> getCalibers([String? brand]);
   Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands();
   Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? caliber]);
+
+  Future<Either<Failure, List<ArmoryMaintenance>>> getMaintenance(String userId);
+  Future<Either<Failure, void>> addMaintenance(String userId, ArmoryMaintenance maintenance);
+
 }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_state.dart';
 import '../core/theme/app_theme.dart';
+import 'add_maintenance_dialog.dart';
 import 'add_tool_dialog.dart';
 import 'armory_card.dart';
 import 'common/common_widgets.dart';
@@ -44,11 +45,42 @@ class ToolsTabWidget extends StatelessWidget {
               onAddPressed: () => _showAddToolDialog(context),
               itemCount: state is ToolsLoaded ? state.tools.length : null,
               isLoading: state is ArmoryLoadingAction,
-              child: _buildToolsList(state),
+              child: _buildToolsContent(state, context),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildToolsContent(ArmoryState state, BuildContext context) {
+    return Column(
+      children: [
+        // Add Maintenance button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            children: [
+              CommonWidgets.buildActionButton(
+                label: 'Log Maintenance',
+                onPressed: () => _showAddMaintenanceDialog(context),
+                icon: Icons.build_circle_outlined,
+              ),
+            ],
+          ),
+        ),
+        _buildToolsList(state),
+      ],
+    );
+  }
+
+  void _showAddMaintenanceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<ArmoryBloc>(),
+        child: AddMaintenanceDialog(userId: userId),
+      ),
     );
   }
 

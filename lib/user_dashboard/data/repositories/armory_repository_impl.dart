@@ -4,6 +4,7 @@ import '../../../core/error/failures.dart';
 import '../../domain/entities/armory_firearm.dart';
 import '../../domain/entities/armory_ammunition.dart';
 import '../../domain/entities/armory_gear.dart';
+import '../../domain/entities/armory_maintenance.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/entities/dropdown_option.dart';
@@ -12,6 +13,7 @@ import '../datasources/armory_remote_datasource.dart';
 import '../models/armory_firearm_model.dart';
 import '../models/armory_ammunition_model.dart';
 import '../models/armory_gear_model.dart';
+import '../models/armory_maintenance_model.dart';
 import '../models/armory_tool_model.dart';
 import '../models/armory_loadout_model.dart';
 
@@ -415,6 +417,35 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     try {
       final options = await remoteDataSource.getBulletTypes(caliber);
       return Right(options);
+    } catch (e) {
+      return Left(FileFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ArmoryMaintenance>>> getMaintenance(String userId) async {
+    try {
+      final maintenance = await remoteDataSource.getMaintenance(userId);
+      return Right(maintenance);
+    } catch (e) {
+      return Left(FileFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> addMaintenance(String userId, ArmoryMaintenance maintenance) async {
+    try {
+      final model = ArmoryMaintenanceModel(
+        assetType: maintenance.assetType,
+        assetId: maintenance.assetId,
+        maintenanceType: maintenance.maintenanceType,
+        date: maintenance.date,
+        roundsFired: maintenance.roundsFired,
+        notes: maintenance.notes,
+        dateAdded: maintenance.dateAdded,
+      );
+      await remoteDataSource.addMaintenance(userId, model);
+      return const Right(null);
     } catch (e) {
       return Left(FileFailure(e.toString()));
     }

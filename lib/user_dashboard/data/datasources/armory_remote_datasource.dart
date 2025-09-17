@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/armory_firearm_model.dart';
 import '../models/armory_ammunition_model.dart';
 import '../models/armory_gear_model.dart';
+import '../models/armory_maintenance_model.dart';
 import '../models/armory_tool_model.dart';
 import '../models/armory_loadout_model.dart';
 import '../../domain/entities/dropdown_option.dart';
@@ -48,6 +49,12 @@ abstract class ArmoryRemoteDataSource {
   Future<List<DropdownOption>> getCalibers([String? brand]);
   Future<List<DropdownOption>> getAmmunitionBrands();
   Future<List<DropdownOption>> getBulletTypes([String? caliber]);
+
+  // Maintenance
+  Future<List<ArmoryMaintenanceModel>> getMaintenance(String userId);
+  Future<void> addMaintenance(String userId, ArmoryMaintenanceModel maintenance);
+
+
 
   // Method to clear cache when needed
   void clearCache();
@@ -703,5 +710,34 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
+  @override
+  Future<List<ArmoryMaintenanceModel>> getMaintenance(String userId) async {
+    try {
+      final querySnapshot = await firestore
+          .collection('armory')
+          .doc(userId)
+          .collection('maintenance')
+          .orderBy('date', descending: true)
+          .get();
 
+      return querySnapshot.docs
+          .map((doc) => ArmoryMaintenanceModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get maintenance: $e');
+    }
+  }
+
+  @override
+  Future<void> addMaintenance(String userId, ArmoryMaintenanceModel maintenance) async {
+    try {
+      await firestore
+          .collection('armory')
+          .doc(userId)
+          .collection('maintenance')
+          .add(maintenance.toMap());
+    } catch (e) {
+      throw Exception('Failed to add maintenance: $e');
+    }
+  }
 }

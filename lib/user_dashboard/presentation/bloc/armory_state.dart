@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/armory_firearm.dart';
 import '../../domain/entities/armory_ammunition.dart';
 import '../../domain/entities/armory_gear.dart';
+import '../../domain/entities/armory_maintenance.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/entities/dropdown_option.dart';
@@ -101,4 +102,12 @@ class ArmoryDataLoaded extends ArmoryState {
 
   @override
   List<Object> get props => [firearms, ammunition, gear, tools, loadouts];
+}
+
+
+class MaintenanceLoaded extends ArmoryState {
+  final List<ArmoryMaintenance> maintenance;
+  const MaintenanceLoaded({required this.maintenance});
+  @override
+  List<Object> get props => [maintenance];
 }

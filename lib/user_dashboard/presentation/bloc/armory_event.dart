@@ -4,6 +4,7 @@ import '../../../core/usecases/usecase.dart';
 import '../../domain/entities/armory_firearm.dart';
 import '../../domain/entities/armory_ammunition.dart';
 import '../../domain/entities/armory_gear.dart';
+import '../../domain/entities/armory_maintenance.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/usecases/get_dropdown_options_usecase.dart';
@@ -106,6 +107,21 @@ class LoadDropdownOptionsEvent extends ArmoryEvent {
 
   @override
   List<Object> get props => [type, filterValue ?? '', secondaryFilter ?? ''];
+}
+
+class LoadMaintenanceEvent extends ArmoryEvent {
+  final String userId;
+  const LoadMaintenanceEvent({required this.userId});
+  @override
+  List<Object> get props => [userId];
+}
+
+class AddMaintenanceEvent extends ArmoryEvent {
+  final String userId;
+  final ArmoryMaintenance maintenance;
+  const AddMaintenanceEvent({required this.userId, required this.maintenance});
+  @override
+  List<Object> get props => [userId, maintenance];
 }
 
 

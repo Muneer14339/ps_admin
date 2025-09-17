@@ -3,6 +3,7 @@ import '../../user_dashboard/domain/entities/armory_ammunition.dart';
 import '../../user_dashboard/domain/entities/armory_firearm.dart';
 import '../../user_dashboard/domain/entities/armory_gear.dart';
 import '../../user_dashboard/domain/entities/armory_loadout.dart';
+import '../../user_dashboard/domain/entities/armory_maintenance.dart';
 import '../../user_dashboard/domain/entities/armory_tool.dart';
 import '../error/failures.dart';
 
@@ -59,6 +60,12 @@ class AddLoadoutParams {
   final String userId;
   final ArmoryLoadout loadout;
   AddLoadoutParams({required this.userId, required this.loadout});
+}
+
+class AddMaintenanceParams {
+  final String userId;
+  final ArmoryMaintenance maintenance;
+  AddMaintenanceParams({required this.userId, required this.maintenance});
 }
 
 class DropdownParams {

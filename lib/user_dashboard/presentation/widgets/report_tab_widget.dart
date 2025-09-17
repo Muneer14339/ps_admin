@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_firearm.dart';
 import '../../domain/entities/armory_ammunition.dart';
 import '../../domain/entities/armory_gear.dart';
+import '../../domain/entities/armory_maintenance.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../bloc/armory_bloc.dart';
@@ -27,6 +28,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
   List<ArmoryGear> _gear = [];
   List<ArmoryTool> _tools = [];
   List<ArmoryLoadout> _loadouts = [];
+  List<ArmoryMaintenance> _maintenance = [];
 
   final Map<String, bool> _expandedSections = {
     'firearms': false,
@@ -49,6 +51,7 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
     bloc.add(LoadGearEvent(userId: widget.userId));
     bloc.add(LoadToolsEvent(userId: widget.userId));
     bloc.add(LoadLoadoutsEvent(userId: widget.userId));
+    bloc.add(LoadMaintenanceEvent(userId: widget.userId));
   }
 
   @override
@@ -65,6 +68,9 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
           setState(() => _tools = state.tools);
         } else if (state is LoadoutsLoaded) {
           setState(() => _loadouts = state.loadouts);
+        }
+        else if (state is MaintenanceLoaded) {
+          setState(() => _maintenance = state.maintenance);
         }
       },
       child: Container(
@@ -97,6 +103,12 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
               'Tools & Equipment',
               _tools.length,
               _buildToolsTable(),
+            ),
+            _buildReportSection(
+              'maintenance',
+              'Maintenance History',
+              _maintenance.length,
+              _buildMaintenanceTable(),
             ),
             _buildReportSection(
               'loadouts',
@@ -268,6 +280,30 @@ class _ReportTabWidgetState extends State<ReportTabWidget> {
             DataCell(SizedBox(width: 80, child: Text(tool.category ?? '', overflow: TextOverflow.ellipsis))),
             DataCell(SizedBox(width: 80, child: CommonWidgets.buildStatusChip(tool.status))),
             DataCell(SizedBox(width: 40, child: Text('${tool.quantity}'))),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMaintenanceTable() {
+    return CommonWidgets.buildDataTable(
+      emptyMessage: 'No maintenance records',
+      columns: const [
+        DataColumn(label: Text('Date')),
+        DataColumn(label: Text('Asset')),
+        DataColumn(label: Text('Type')),
+        DataColumn(label: Text('Rounds')),
+        DataColumn(label: Text('Notes')),
+      ],
+      rows: _maintenance.map((maint) {
+        return DataRow(
+          cells: [
+            DataCell(SizedBox(width: 80, child: Text('${maint.date.day}/${maint.date.month}/${maint.date.year}'))),
+            DataCell(SizedBox(width: 100, child: Text(maint.assetId, overflow: TextOverflow.ellipsis))),
+            DataCell(SizedBox(width: 80, child: Text(maint.maintenanceType, overflow: TextOverflow.ellipsis))),
+            DataCell(SizedBox(width: 60, child: Text('${maint.roundsFired ?? 0}'))),
+            DataCell(SizedBox(width: 100, child: Text(maint.notes ?? '', overflow: TextOverflow.ellipsis))),
           ],
         );
       }).toList(),

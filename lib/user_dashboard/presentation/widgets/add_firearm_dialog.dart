@@ -201,14 +201,11 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     );
   }
 
-
-
   @override
   void dispose() {
     _controllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return BlocListener<ArmoryBloc, ArmoryState>(
@@ -244,7 +241,6 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       ),
     );
   }
-
 
   Widget _buildForm() {
     return SingleChildScrollView(

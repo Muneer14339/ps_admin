@@ -1,12 +1,14 @@
 // lib/user_dashboard/presentation/bloc/armory_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/usecases/usecase.dart';
+import '../../domain/usecases/add_maintenance_usecase.dart';
 import '../../domain/usecases/get_firearms_usecase.dart';
 import '../../domain/usecases/add_firearm_usecase.dart';
 import '../../domain/usecases/get_ammunition_usecase.dart';
 import '../../domain/usecases/add_ammunition_usecase.dart';
 import '../../domain/usecases/get_gear_usecase.dart';
 import '../../domain/usecases/add_gear_usecase.dart';
+import '../../domain/usecases/get_maintenance_usecase.dart';
 import '../../domain/usecases/get_tools_usecase.dart';
 import '../../domain/usecases/add_tool_usecase.dart';
 import '../../domain/usecases/get_loadouts_usecase.dart';
@@ -27,6 +29,8 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
   final GetLoadoutsUseCase getLoadoutsUseCase;
   final AddLoadoutUseCase addLoadoutUseCase;
   final GetDropdownOptionsUseCase getDropdownOptionsUseCase;
+  final GetMaintenanceUseCase getMaintenanceUseCase;
+  final AddMaintenanceUseCase addMaintenanceUseCase;
 
   ArmoryBloc({
     required this.getFirearmsUseCase,
@@ -40,6 +44,8 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
     required this.getLoadoutsUseCase,
     required this.addLoadoutUseCase,
     required this.getDropdownOptionsUseCase,
+    required this.getMaintenanceUseCase,
+    required this.addMaintenanceUseCase,
   }) : super(const ArmoryInitial()) {
     on<LoadFirearmsEvent>(_onLoadFirearms);
     on<LoadAmmunitionEvent>(_onLoadAmmunition);
@@ -52,6 +58,8 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
     on<AddToolEvent>(_onAddTool);
     on<AddLoadoutEvent>(_onAddLoadout);
     on<LoadDropdownOptionsEvent>(_onLoadDropdownOptions);
+    on<LoadMaintenanceEvent>(_onLoadMaintenance);
+    on<AddMaintenanceEvent>(_onAddMaintenance);
   }
 
   void _onLoadFirearms(LoadFirearmsEvent event, Emitter<ArmoryState> emit) async {
@@ -206,6 +214,29 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
     result.fold(
           (failure) => emit(ArmoryError(message: failure.toString())),
           (options) => emit(DropdownOptionsLoaded(options: options)),
+    );
+  }
+
+  void _onLoadMaintenance(LoadMaintenanceEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoading());
+    final result = await getMaintenanceUseCase(UserIdParams(userId: event.userId));
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (maintenance) => emit(MaintenanceLoaded(maintenance: maintenance)),
+    );
+  }
+
+  void _onAddMaintenance(AddMaintenanceEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await addMaintenanceUseCase(
+      AddMaintenanceParams(userId: event.userId, maintenance: event.maintenance),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Maintenance log added successfully!'));
+        add(LoadMaintenanceEvent(userId: event.userId));
+      },
     );
   }
 }
