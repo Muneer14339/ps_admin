@@ -39,10 +39,22 @@ class AddFirearmParams {
   AddFirearmParams({required this.userId, required this.firearm});
 }
 
+class DeleteFirearmParams {
+  final String userId;
+  final ArmoryFirearm firearm;
+  DeleteFirearmParams({required this.userId, required this.firearm});
+}
+
 class AddAmmunitionParams {
   final String userId;
   final ArmoryAmmunition ammunition;
   AddAmmunitionParams({required this.userId, required this.ammunition});
+}
+
+class DeleteAmmunitionParams {
+  final String userId;
+  final ArmoryAmmunition ammunition;
+  DeleteAmmunitionParams({required this.userId, required this.ammunition});
 }
 
 class AddGearParams {
@@ -51,10 +63,22 @@ class AddGearParams {
   AddGearParams({required this.userId, required this.gear});
 }
 
+class DeleteGearParams {
+  final String userId;
+  final ArmoryGear gear;
+  DeleteGearParams({required this.userId, required this.gear});
+}
+
 class AddToolParams {
   final String userId;
   final ArmoryTool tool;
   AddToolParams({required this.userId, required this.tool});
+}
+
+class DeleteToolParams {
+  final String userId;
+  final ArmoryTool tool;
+  DeleteToolParams({required this.userId, required this.tool});
 }
 
 class AddLoadoutParams {
@@ -63,10 +87,22 @@ class AddLoadoutParams {
   AddLoadoutParams({required this.userId, required this.loadout});
 }
 
+class DeleteLoadoutParams {
+  final String userId;
+  final ArmoryLoadout loadout;
+  DeleteLoadoutParams({required this.userId, required this.loadout});
+}
+
 class AddMaintenanceParams {
   final String userId;
   final ArmoryMaintenance maintenance;
   AddMaintenanceParams({required this.userId, required this.maintenance});
+}
+
+class DeleteMaintenanceParams {
+  final String userId;
+  final ArmoryMaintenance maintenance;
+  DeleteMaintenanceParams({required this.userId, required this.maintenance});
 }
 
 // lib/core/usecases/usecase.dart - Add to existing file

@@ -30,6 +30,12 @@ import 'user_dashboard/data/datasources/armory_remote_datasource.dart';
 import 'user_dashboard/data/repositories/armory_repository_impl.dart';
 import 'user_dashboard/domain/repositories/armory_repository.dart';
 import 'user_dashboard/domain/usecases/add_maintenance_usecase.dart';
+import 'user_dashboard/domain/usecases/delete_ammunition_usecase.dart';
+import 'user_dashboard/domain/usecases/delete_firearm_usecase.dart';
+import 'user_dashboard/domain/usecases/delete_gear_usecase.dart';
+import 'user_dashboard/domain/usecases/delete_loadout_usecase.dart';
+import 'user_dashboard/domain/usecases/delete_maintenance_usecase.dart';
+import 'user_dashboard/domain/usecases/delete_tool_usecase.dart';
 import 'user_dashboard/domain/usecases/get_firearms_usecase.dart' as user_firearms;
 import 'user_dashboard/domain/usecases/add_firearm_usecase.dart';
 import 'user_dashboard/domain/usecases/get_ammunition_usecase.dart' as user_ammo;
@@ -88,6 +94,12 @@ Future<void> init() async {
       getDropdownOptionsUseCase: sl(),
           getMaintenanceUseCase: sl(),
           addMaintenanceUseCase: sl(),
+          deleteFirearmUseCase: sl(),
+          deleteAmmunitionUseCase: sl(),
+          deleteGearUseCase: sl(),
+          deleteLoadoutUseCase: sl(),
+          deleteMaintenanceUseCase: sl(),
+          deleteToolUseCase: sl()
     ),
   );
 
@@ -118,6 +130,14 @@ Future<void> init() async {
   // Use cases
   sl.registerLazySingleton(() => GetMaintenanceUseCase(sl<ArmoryRepository>()));
   sl.registerLazySingleton(() => AddMaintenanceUseCase(sl<ArmoryRepository>()));
+  // User Dashboard - Delete Use Cases
+  sl.registerLazySingleton(() => DeleteFirearmUseCase(sl<ArmoryRepository>()));
+  sl.registerLazySingleton(() => DeleteAmmunitionUseCase(sl<ArmoryRepository>()));
+  sl.registerLazySingleton(() => DeleteGearUseCase(sl<ArmoryRepository>()));
+  sl.registerLazySingleton(() => DeleteToolUseCase(sl<ArmoryRepository>()));
+  sl.registerLazySingleton(() => DeleteLoadoutUseCase(sl<ArmoryRepository>()));
+  sl.registerLazySingleton(() => DeleteMaintenanceUseCase(sl<ArmoryRepository>()));
+
 
   // Repository - Authentication
   sl.registerLazySingleton<AuthRepository>(

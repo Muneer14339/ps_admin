@@ -2,6 +2,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/usecases/usecase.dart';
 import '../../domain/usecases/add_maintenance_usecase.dart';
+import '../../domain/usecases/delete_ammunition_usecase.dart';
+import '../../domain/usecases/delete_firearm_usecase.dart';
+import '../../domain/usecases/delete_gear_usecase.dart';
+import '../../domain/usecases/delete_loadout_usecase.dart';
+import '../../domain/usecases/delete_maintenance_usecase.dart';
+import '../../domain/usecases/delete_tool_usecase.dart';
 import '../../domain/usecases/get_firearms_usecase.dart';
 import '../../domain/usecases/add_firearm_usecase.dart';
 import '../../domain/usecases/get_ammunition_usecase.dart';
@@ -32,20 +38,35 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
   final GetMaintenanceUseCase getMaintenanceUseCase;
   final AddMaintenanceUseCase addMaintenanceUseCase;
 
+
+  // Add Delete use cases to constructor
+  final DeleteFirearmUseCase deleteFirearmUseCase;
+  final DeleteAmmunitionUseCase deleteAmmunitionUseCase;
+  final DeleteGearUseCase deleteGearUseCase;
+  final DeleteToolUseCase deleteToolUseCase;
+  final DeleteMaintenanceUseCase deleteMaintenanceUseCase;
+  final DeleteLoadoutUseCase deleteLoadoutUseCase;
+
   ArmoryBloc({
     required this.getFirearmsUseCase,
     required this.addFirearmUseCase,
+    required this.deleteFirearmUseCase,           // Add this
     required this.getAmmunitionUseCase,
     required this.addAmmunitionUseCase,
+    required this.deleteAmmunitionUseCase,       // Add this
     required this.getGearUseCase,
     required this.addGearUseCase,
+    required this.deleteGearUseCase,             // Add this
     required this.getToolsUseCase,
     required this.addToolUseCase,
+    required this.deleteToolUseCase,             // Add this
     required this.getLoadoutsUseCase,
     required this.addLoadoutUseCase,
+    required this.deleteLoadoutUseCase,          // Add this
     required this.getDropdownOptionsUseCase,
     required this.getMaintenanceUseCase,
     required this.addMaintenanceUseCase,
+    required this.deleteMaintenanceUseCase,      // Add this
   }) : super(const ArmoryInitial()) {
     on<LoadFirearmsEvent>(_onLoadFirearms);
     on<LoadAmmunitionEvent>(_onLoadAmmunition);
@@ -60,6 +81,14 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
     on<LoadDropdownOptionsEvent>(_onLoadDropdownOptions);
     on<LoadMaintenanceEvent>(_onLoadMaintenance);
     on<AddMaintenanceEvent>(_onAddMaintenance);
+
+    // Delete events
+    on<DeleteFirearmEvent>(_onDeleteFirearm);
+    on<DeleteAmmunitionEvent>(_onDeleteAmmunition);
+    on<DeleteGearEvent>(_onDeleteGear);
+    on<DeleteToolEvent>(_onDeleteTool);
+    on<DeleteMaintenanceEvent>(_onDeleteMaintenance);
+    on<DeleteLoadoutEvent>(_onDeleteLoadout);
   }
 
   void _onLoadFirearms(LoadFirearmsEvent event, Emitter<ArmoryState> emit) async {
@@ -235,6 +264,91 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
           (_) {
         emit(const ArmoryActionSuccess(message: 'Maintenance log added successfully!'));
         add(LoadMaintenanceEvent(userId: event.userId));
+      },
+    );
+  }
+
+  // Delete handlers
+  void _onDeleteFirearm(DeleteFirearmEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await deleteFirearmUseCase(
+      DeleteFirearmParams(userId: event.userId, firearm: event.firearm),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Firearm deleted successfully!'));
+        add(LoadFirearmsEvent(userId: event.userId));
+      },
+    );
+  }
+
+  void _onDeleteAmmunition(DeleteAmmunitionEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await deleteAmmunitionUseCase(
+      DeleteAmmunitionParams(userId: event.userId, ammunition: event.ammunition),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Ammunition deleted successfully!'));
+        add(LoadAmmunitionEvent(userId: event.userId));
+      },
+    );
+  }
+
+  void _onDeleteGear(DeleteGearEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await deleteGearUseCase(
+      DeleteGearParams(userId: event.userId, gear: event.gear),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Gear deleted successfully!'));
+        add(LoadGearEvent(userId: event.userId));
+      },
+    );
+  }
+
+  void _onDeleteTool(DeleteToolEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await deleteToolUseCase(
+      DeleteToolParams(userId: event.userId, tool: event.tool),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Tool deleted successfully!'));
+        add(LoadToolsEvent(userId: event.userId));
+      },
+    );
+  }
+
+  void _onDeleteMaintenance(DeleteMaintenanceEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await deleteMaintenanceUseCase(
+      DeleteMaintenanceParams(userId: event.userId, maintenance: event.maintenance),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Maintenance deleted successfully!'));
+        add(LoadMaintenanceEvent(userId: event.userId));
+      },
+    );
+  }
+
+  void _onDeleteLoadout(DeleteLoadoutEvent event, Emitter<ArmoryState> emit) async {
+    emit(const ArmoryLoadingAction());
+    final result = await deleteLoadoutUseCase(
+      DeleteLoadoutParams(userId: event.userId, loadout: event.loadout),
+    );
+    result.fold(
+          (failure) => emit(ArmoryError(message: failure.toString())),
+          (_) {
+        emit(const ArmoryActionSuccess(message: 'Loadout deleted successfully!'));
+        add(LoadLoadoutsEvent(userId: event.userId));
       },
     );
   }
