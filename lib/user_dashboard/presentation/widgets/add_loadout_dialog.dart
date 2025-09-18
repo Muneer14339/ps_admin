@@ -1,6 +1,7 @@
 // lib/user_dashboard/presentation/widgets/add_loadout_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/armory_gear.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/entities/dropdown_option.dart';
 import '../../domain/entities/armory_firearm.dart';
@@ -31,6 +32,11 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
   bool _loadingFirearms = true;
   bool _loadingAmmunition = true;
 
+  List<DropdownOption> _gearOptions = [];
+  List<String> _selectedGearIds = [];
+  bool _loadingGear = true;
+
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +55,8 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
     // Load user's firearms and ammunition
     context.read<ArmoryBloc>().add(LoadFirearmsEvent(userId: widget.userId));
     context.read<ArmoryBloc>().add(LoadAmmunitionEvent(userId: widget.userId));
+    context.read<ArmoryBloc>().add(LoadGearEvent(userId: widget.userId));
+
   }
 
   void _handleFirearmsLoaded(List<ArmoryFirearm> firearms) {
@@ -71,6 +79,16 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
     });
   }
 
+  void _handleGearLoaded(List<ArmoryGear> gear) {
+    setState(() {
+      _gearOptions = gear
+          .map((g) => DropdownOption(value: g.id!, label: g.model))
+          .toList();
+      _loadingGear = false;
+    });
+  }
+
+
   @override
   void dispose() {
     _controllers.values.forEach((controller) => controller.dispose());
@@ -85,7 +103,10 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
           _handleFirearmsLoaded(state.firearms);
         } else if (state is AmmunitionLoaded) {
           _handleAmmunitionLoaded(state.ammunition);
-        } else if (state is ArmoryActionSuccess) {
+        } else if (state is GearLoaded) {
+          _handleGearLoaded(state.gear);
+        }
+        else if (state is ArmoryActionSuccess) {
           Navigator.of(context).pop();
         }
       },
@@ -153,6 +174,58 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
+            // Gear Multi-Select
+            CommonDialogWidgets.buildDropdownField(
+              label: 'Gear',
+              value: null, // we don't bind one value because it's multi-select
+              options: _gearOptions,
+              isLoading: _loadingGear,
+              enabled: !_loadingGear,
+              onChanged: (value) {
+                if (value != null && !_selectedGearIds.contains(value)) {
+                  setState(() => _selectedGearIds.add(value));
+                }
+              },
+            ),
+
+// Show selected gear as chips
+            // Show selected gear as chips
+            if (_selectedGearIds.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _selectedGearIds.map((id) {
+                    final label = _gearOptions.firstWhere((g) => g.value == id).label;
+                    return Chip(
+                      label: Text(
+                        label,
+                        style: AppTextStyles.fieldLabel.copyWith(
+                          fontSize: 13,
+                          color: AppColors.primaryText,
+                        ),
+                      ),
+                      backgroundColor: AppColors.cardBackground.withOpacity(0.9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppSizes.cardBorderRadius),
+                        side: BorderSide(color: AppColors.primaryBackground),
+                      ),
+                      deleteIcon: const Icon(Icons.close, size: 18, color: AppColors.secondaryText),
+                      onDeleted: () {
+                        setState(() => _selectedGearIds.remove(id));
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+
+
+            const SizedBox(height: AppSizes.fieldSpacing),
+
+
             // Notes
             CommonDialogWidgets.buildTextField(
               label: 'Notes',
@@ -185,10 +258,11 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
       name: name,
       firearmId: _selectedFirearmId,
       ammunitionId: _selectedAmmunitionId,
-      gearIds: const [], // TODO: Add gear selection in future
+      gearIds: _selectedGearIds,
       notes: _controllers['notes']?.text.trim(),
       dateAdded: DateTime.now(),
     );
+
 
     context.read<ArmoryBloc>().add(
       AddLoadoutEvent(userId: widget.userId, loadout: loadout),
