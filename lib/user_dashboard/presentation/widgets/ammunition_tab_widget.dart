@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/armory_bloc.dart';
+import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
 import '../core/theme/app_theme.dart';
 import 'add_ammunition_dialog.dart';
@@ -85,6 +86,9 @@ class AmmunitionTabWidget extends StatelessWidget {
         value: context.read<ArmoryBloc>(),
         child: AddAmmunitionDialog(userId: userId),
       ),
-    );
+    ).then((_) {
+      // This runs after the dialog is closed
+      context.read<ArmoryBloc>().add(LoadAmmunitionEvent(userId: userId));
+    });
   }
 }

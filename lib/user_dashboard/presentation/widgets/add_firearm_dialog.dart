@@ -69,8 +69,8 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmModels,
-        filterValue: _dropdownValues['brand'],
-        secondaryFilter: _dropdownValues['type'],
+        filterValue: _dropdownValues['type'],
+        secondaryFilter: _dropdownValues['brand'],
       ),
     );
   }
@@ -85,8 +85,9 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmGenerations,
-        filterValue: _dropdownValues['brand'],
-        secondaryFilter: _dropdownValues['model'],
+        filterValue: _dropdownValues['type'],
+        secondaryFilter: _dropdownValues['brand'],
+        tertiaryFilter: _dropdownValues['model'],
       ),
     );
   }

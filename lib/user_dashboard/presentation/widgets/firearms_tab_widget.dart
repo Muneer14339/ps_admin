@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/armory_bloc.dart';
+import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
 import '../core/theme/app_theme.dart';
 import 'add_firearm_dialog.dart';
@@ -26,7 +27,8 @@ class FirearmsTabWidget extends StatelessWidget {
               backgroundColor: AppColors.successColor,
             ),
           );
-        } else if (state is ArmoryError) {
+        }
+        else if (state is ArmoryError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -85,6 +87,9 @@ class FirearmsTabWidget extends StatelessWidget {
         value: context.read<ArmoryBloc>(),
         child: AddFirearmDialog(userId: userId),
       ),
-    );
+    ).then((_) {
+      // This runs after the dialog is closed
+      context.read<ArmoryBloc>().add(LoadFirearmsEvent(userId: userId));
+    });
   }
 }

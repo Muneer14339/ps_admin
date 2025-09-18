@@ -157,7 +157,12 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
         value: context.read<ArmoryBloc>(),
         child: AddToolDialog(userId: widget.userId),
       ),
-    );
+    ).then((_) {
+      // This runs after the dialog is closed
+      context.read<ArmoryBloc>().add(LoadToolsEvent(userId: widget.userId));
+      context.read<ArmoryBloc>().add(LoadMaintenanceEvent(userId: widget.userId));
+
+    });
   }
 
   void _showAddMaintenanceDialog(BuildContext context) {
@@ -167,6 +172,10 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
         value: context.read<ArmoryBloc>(),
         child: AddMaintenanceDialog(userId: widget.userId),
       ),
-    );
+    ).then((_) {
+      // This runs after the dialog is closed
+      context.read<ArmoryBloc>().add(LoadToolsEvent(userId: widget.userId));
+      context.read<ArmoryBloc>().add(LoadMaintenanceEvent(userId: widget.userId));
+    });
   }
 }

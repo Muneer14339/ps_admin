@@ -402,8 +402,6 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-
-
   // User's personal armory data load کرنے کے لیے نئے methods
   Future<List<Map<String, dynamic>>> _getUserFirearmsData() async {
     try {
@@ -637,21 +635,22 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   }
 
   @override
-  Future<List<DropdownOption>> getFirearmModels([String? brand, String? type]) async {
+  Future<List<DropdownOption>> getFirearmModels([ String? type, String? brand]) async {
     try {
-      final refData = await _getFirearmsData();
+      final referenceData = await _getFirearmsData();
       final userData = await _getUserFirearmsData();
-      final allData = [...refData, ...userData];
+      final allData = [...referenceData, ...userData];
 
       final filteredData = allData.where((data) {
         bool matches = true;
 
-        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
-          matches = matches && data['brand']?.toString() == brand;
-        }
         if (type?.isNotEmpty == true && !_isCustomValue(type)) {
           matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
         }
+        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
+          matches = matches && data['brand']?.toString() == brand;
+        }
+
 
         return matches;
       });
@@ -670,24 +669,25 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   }
 
   @override
-  Future<List<DropdownOption>> getFirearmGenerations([String? brand, String? model, String? type]) async {
+  Future<List<DropdownOption>> getFirearmGenerations([String? type, String? brand, String? model]) async {
     try {
-      final refData = await _getFirearmsData();
+      final referenceData = await _getFirearmsData();
       final userData = await _getUserFirearmsData();
-      final allData = [...refData, ...userData];
+      final allData = [...referenceData, ...userData];
 
       final filteredData = allData.where((data) {
         bool matches = true;
 
+        if (type?.isNotEmpty == true && !_isCustomValue(type)) {
+          matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
+        }
         if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
           matches = matches && data['brand']?.toString() == brand;
         }
         if (model?.isNotEmpty == true && !_isCustomValue(model)) {
           matches = matches && data['model']?.toString() == model;
         }
-        if (type?.isNotEmpty == true && !_isCustomValue(type)) {
-          matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
-        }
+
 
         return matches;
       });
@@ -704,7 +704,6 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
       throw Exception('Failed to get firearm generations: $e');
     }
   }
-
 
   @override
   Future<List<DropdownOption>> getAmmunitionBrands() async {

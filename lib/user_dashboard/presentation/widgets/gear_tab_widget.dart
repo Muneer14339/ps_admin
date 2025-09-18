@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_gear.dart';
 import '../bloc/armory_bloc.dart';
+import '../bloc/armory_event.dart';
 import '../bloc/armory_state.dart';
 import '../core/theme/app_theme.dart';
 import 'add_gear_dialog.dart';
@@ -110,6 +111,9 @@ class GearTabWidget extends StatelessWidget {
         value: context.read<ArmoryBloc>(),
         child: AddGearDialog(userId: userId),
       ),
-    );
+    ).then((_) {
+      // This runs after the dialog is closed
+      context.read<ArmoryBloc>().add(LoadGearEvent(userId: userId));
+    });
   }
 }

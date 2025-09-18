@@ -1,6 +1,7 @@
 // lib/user_dashboard/presentation/widgets/loadouts_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pa_sreens/user_dashboard/presentation/bloc/armory_event.dart';
 import '../bloc/armory_bloc.dart';
 import '../bloc/armory_state.dart';
 import '../core/theme/app_theme.dart';
@@ -85,6 +86,9 @@ class LoadoutsTabWidget extends StatelessWidget {
         value: context.read<ArmoryBloc>(),
         child: AddLoadoutDialog(userId: userId),
       ),
-    );
+    ).then((_) {
+      // This runs after the dialog is closed
+      context.read<ArmoryBloc>().add(LoadLoadoutsEvent(userId: userId));
+    });
   }
 }
