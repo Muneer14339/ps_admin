@@ -66,13 +66,10 @@ class _AddAmmunitionDialogState extends State<AddAmmunitionDialog> {
       _dropdownValues['caliber'] = null;
     });
 
-    // Check if brand is custom - pass empty string to show all calibers
-    final filterBrand = EnhancedDialogWidgets.isCustomValue(brand) ? '' : brand;
-
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
-        type: DropdownType.calibers,
-        filterValue: filterBrand,
+        type: DropdownType.ammunitionCaliber,
+        filterValue: brand,
       ),
     );
   }

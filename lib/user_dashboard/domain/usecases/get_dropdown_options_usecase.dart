@@ -53,6 +53,11 @@ class GetDropdownOptionsUseCase implements UseCase<List<DropdownOption>, Dropdow
       case DropdownType.ammunitionBrands:
         return await repository.getAmmunitionBrands();
 
+      case DropdownType.ammunitionCaliber:
+        return await repository.getAmmoCalibers(
+          _isCustomValue(params.filterValue) ? null : params.filterValue,
+        );
+
       case DropdownType.bulletTypes:
         final caliberFilter = _isCustomValue(params.filterValue) ? null : params.filterValue;
         return await repository.getBulletTypes(caliberFilter);

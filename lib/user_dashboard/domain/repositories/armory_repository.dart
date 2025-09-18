@@ -60,6 +60,8 @@ abstract class ArmoryRepository {
     String?  firingMechanism]);
 
   Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands();
+  Future<Either<Failure, List<DropdownOption>>> getAmmoCalibers([
+    String? brand]);
   Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? caliber]);
 
   Future<Either<Failure, List<ArmoryMaintenance>>> getMaintenance(String userId);

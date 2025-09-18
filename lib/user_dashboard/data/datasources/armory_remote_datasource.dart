@@ -49,6 +49,7 @@ abstract class ArmoryRemoteDataSource {
   Future<List<DropdownOption>> getCalibers([String? generation,]);
   Future<List<DropdownOption>> getAmmunitionBrands();
   Future<List<DropdownOption>> getBulletTypes([String? caliber]);
+  Future<List<DropdownOption>> getAmmoCalibers([String? brand]);
 
 
   // Maintenance
@@ -82,10 +83,12 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   List<Map<String, dynamic>>? filteredAmmoBulletWeight;
 
   /// Call this ONCE (e.g., in a repository init method or when opening the Armory screen)
-  Future<void> initializeArmoryData() async {
+  Future<void> initializeFirarmData() async {
     _firearmsCache ??= await _getFirearmsData();
-    _ammunitionCache ??= await _getAmmunitionData();
     _userFirearmsCache ??= await _getUserFirearmsData();
+  }
+  Future<void> initializeAmmoData() async {
+    _ammunitionCache ??= await _getAmmunitionData();
     _userAmmunitionCache ??= await _getUserAmmunitionData();
   }
 
@@ -477,59 +480,10 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
-// Helper method to merge and deduplicate data
-  List<String> _mergeAndDeduplicateStrings(
-      List<Map<String, dynamic>> referenceData,
-      List<Map<String, dynamic>> userData,
-      String field,
-      [String? filterField,
-        String? filterValue])
-  {
-
-    final allValues = <String>{};
-
-    // Reference data سے values نکالیں
-    for (final data in referenceData) {
-      if (filterField != null && filterValue != null) {
-        if (data[filterField]?.toString().toLowerCase() != filterValue.toLowerCase()) {
-          continue;
-        }
-      }
-      final value = data[field]?.toString() ?? '';
-      if (value.isNotEmpty) allValues.add(value);
-    }
-
-    // User data سے values نکالیں
-    for (final data in userData) {
-      if (filterField != null && filterValue != null) {
-        if (data[filterField]?.toString().toLowerCase() != filterValue.toLowerCase()) {
-          continue;
-        }
-      }
-      final value = data[field]?.toString() ?? '';
-      if (value.isNotEmpty) allValues.add(value);
-    }
-
-    final result = allValues.toList();
-    result.sort();
-    return result;
-  }
-
-// Updated dropdown methods
-
-
-
-
-  // Helper method to check if value is custom
-  bool _isCustomValue(String? value) {
-    return value != null && value.startsWith('__CUSTOM__');
-  }
-
-
   @override
   Future<List<DropdownOption>> getFirearmBrands([String? type]) async {
     try {
-      await initializeArmoryData();
+      await initializeFirarmData();
       final filtered = _filterData(
         source: allFirearmsData,
         field: 'type',
@@ -677,10 +631,17 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   @override
   Future<List<DropdownOption>> getAmmunitionBrands() async {
     try {
-      final referenceData = await _getAmmunitionData();
-      final userData = await _getUserAmmunitionData();
+      await initializeAmmoData();
+      final brands = allAmmoData
+          .map((e) => e['brand']?.toString() ?? '')
+          .where((b) => b.isNotEmpty)
+          .toSet()
+          .toList();
+      brands.sort();
+      filteredAmmoBrands = allAmmoData;
 
-      final brands = _mergeAndDeduplicateStrings(referenceData, userData, 'brand');
+      // Reset deeper filters
+      filteredAmmoCaliber = filteredAmmoBulletWeight = null;
 
       return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
     } catch (e) {
@@ -689,26 +650,55 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   }
 
   @override
-  Future<List<DropdownOption>> getBulletTypes([String? caliber]) async {
+  Future<List<DropdownOption>> getAmmoCalibers([String? brand]) async
+  {
     try {
-      final referenceData = await _getAmmunitionData();
-      final userData = await _getUserAmmunitionData();
-
-      final bulletTypes = _mergeAndDeduplicateStrings(
-          referenceData,
-          userData,
-          'bullet weight (gr)',
-          caliber?.isNotEmpty == true ? 'caliber' : null,
-          caliber
+      if (filteredAmmoBrands == null) return [];
+      final filtered = _filterData(
+        source: filteredAmmoBrands!,
+        field: 'brand',
+        value: brand,
       );
 
-      return bulletTypes.map((bullet) => DropdownOption(value: bullet, label: bullet)).toList();
+      final calibers = filtered
+          .map((e) => e['caliber']?.toString() ?? '')
+          .where((c) => c.isNotEmpty)
+          .toSet()
+          .toList();
+      calibers.sort();
+      filteredAmmoCaliber = filtered;
+
+      // Reset deeper filter
+      filteredAmmoBulletWeight = null;
+      return calibers.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
+    } catch (e) {
+      throw Exception('Failed to get calibers: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getBulletTypes([String? caliber]) async {
+    try {
+      if (filteredAmmoCaliber == null) return [];
+      final filtered = _filterData(
+        source: filteredAmmoCaliber!,
+        field: 'caliber',
+        value: caliber,
+      );
+
+      final bulletWeights = filtered
+          .map((e) => e['bullet weight (gr)']?.toString() ?? '')
+          .where((w) => w.isNotEmpty)
+          .toSet()
+          .toList();
+      bulletWeights.sort();
+      filteredAmmoBulletWeight = filtered;
+
+      return bulletWeights.map((bullet) => DropdownOption(value: bullet, label: bullet)).toList();
     } catch (e) {
       throw Exception('Failed to get bullet types: $e');
     }
   }
-
-
 
   @override
   Future<List<ArmoryMaintenanceModel>> getMaintenance(String userId) async {
