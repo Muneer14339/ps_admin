@@ -45,19 +45,19 @@ abstract class ArmoryRepository {
   Future<Either<Failure, List<DropdownOption>>> getFirearmBrands([String? type]);
 
   Future<Either<Failure, List<DropdownOption>>> getFirearmModels(
-       [String? brand,String? type]);
+       [String? brand]);
 
   Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations(
-       [String? brand, String? model,String? type]);
+       [ String? model]);
 
   Future<Either<Failure, List<DropdownOption>>> getCalibers([
-    String? brand, String? model, String? generation]);
+     String? generation]);
 
   Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms([
-    String? type, String? caliber]);
+    String? caliber]);
 
   Future<Either<Failure, List<DropdownOption>>> getFirearmMakes([
-    String? type, String? brand, String? model, String? generation, String? caliber]);
+    String?  firingMechanism]);
 
   Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands();
   Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? caliber]);

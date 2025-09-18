@@ -354,9 +354,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmModels( [String? brand, String? type]) async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmModels( [String? brand]) async {
     try {
-      final options = await remoteDataSource.getFirearmModels(brand, type);
+      final options = await remoteDataSource.getFirearmModels(brand);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -364,9 +364,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations( [String? brand, String? model, String? type]) async {
+  Future<Either<Failure, List<DropdownOption>>> getFirearmGenerations( [ String? model]) async {
     try {
-      final options = await remoteDataSource.getFirearmGenerations(brand, model, type);
+      final options = await remoteDataSource.getFirearmGenerations(model);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -375,10 +375,10 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
 
   @override
   Future<Either<Failure, List<DropdownOption>>> getCalibers([
-    String? brand, String? model, String? generation]) async
+     String? generation]) async
   {
     try {
-      final options = await remoteDataSource.getCalibers(brand, model, generation);
+      final options = await remoteDataSource.getCalibers( generation);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -387,10 +387,10 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
 
   @override
   Future<Either<Failure, List<DropdownOption>>> getFirearmFiringMechanisms([
-    String? type, String? caliber]) async
+     String? caliber]) async
   {
     try {
-      final options = await remoteDataSource.getFirearmFiringMechanisms(type, caliber);
+      final options = await remoteDataSource.getFirearmFiringMechanisms( caliber);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -399,10 +399,10 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
 
   @override
   Future<Either<Failure, List<DropdownOption>>> getFirearmMakes([
-    String? type, String? brand, String? model, String? generation, String? caliber]) async
+    String?  firingMechanism]) async
   {
     try {
-      final options = await remoteDataSource.getFirearmMakes(type, brand, model, generation, caliber);
+      final options = await remoteDataSource.getFirearmMakes( firingMechanism);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));

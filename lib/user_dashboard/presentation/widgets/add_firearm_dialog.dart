@@ -69,8 +69,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmModels,
-        filterValue: _dropdownValues['type'],
-        secondaryFilter: _dropdownValues['brand'],
+        filterValue: brand,
       ),
     );
   }
@@ -85,14 +84,12 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmGenerations,
-        filterValue: _dropdownValues['type'],
-        secondaryFilter: _dropdownValues['brand'],
-        tertiaryFilter: _dropdownValues['model'],
+        filterValue: model,
       ),
     );
   }
 
-  void _loadCalibersForSelection() {
+  void _loadCalibersForSelection(String generation) {
     setState(() {
       _loadingCalibers = true;
       _calibers.clear();
@@ -102,14 +99,12 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.calibers,
-        filterValue: _dropdownValues['brand'],        // brand
-        secondaryFilter: _dropdownValues['model'],    // model
-        tertiaryFilter: _dropdownValues['generation'], // generation
+        filterValue: generation,
       ),
     );
   }
 
-  void _loadFiringMechanismsForSelection() {
+  void _loadFiringMechanismsForSelection(String caliber) {
     setState(() {
       _loadingMechanisms = true;
       _firearmMechanisms.clear();
@@ -119,13 +114,12 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmFiringMechanisms,
-        filterValue: _dropdownValues['type'],         // type
-        secondaryFilter: _dropdownValues['caliber'],  // caliber
+        filterValue: caliber,       // caliber
       ),
     );
   }
 
-  void _loadMakesForSelection() {
+  void _loadMakesForSelection(String firingMachanism) {
     setState(() {
       _loadingMakes = true;
       _firearmMakes.clear();
@@ -135,11 +129,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmMakes,
-        filterValue: _dropdownValues['type'],           // type
-        secondaryFilter: _dropdownValues['brand'],      // brand
-        tertiaryFilter: _dropdownValues['model'],       // model
-        quaternaryFilter: _dropdownValues['generation'], // generation
-        quinaryFilter: _dropdownValues['caliber'],      // caliber
+        filterValue: firingMachanism,    // caliber
       ),
     );
   }
@@ -201,22 +191,27 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
 
   void _onGenerationChanged(String? value) {
     setState(() => _dropdownValues['generation'] = value);
-    _loadCalibersForSelection(); // Load calibers when generation is selected/changed
+    if(value!= null){
+      _loadCalibersForSelection(value); // Load calibers when generation is selected/changed
+
+    }
   }
 
   void _onCaliberChanged(String? value) {
     setState(() => _dropdownValues['caliber'] = value);
     if (value != null) {
-      _loadFiringMechanismsForSelection();
+      _loadFiringMechanismsForSelection(value);
     }
   }
 
   void _onFiringMechanismChanged(String? value) {
     setState(() => _dropdownValues['firingMechanism'] = value);
-    _loadMakesForSelection(); // Load makes when firing mechanism is selected/changed
+    if(value!= null){
+      _loadMakesForSelection(value); // Load calibers when generation is selected/changed
+
+    }
+     // Load makes when firing mechanism is selected/changed
   }
-
-
 
   void _initializeControllers() {
     final fields = ['make', 'model', 'nickname', 'serial', 'notes'];
@@ -231,18 +226,18 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
 
 
 
-  // Replace the _loadSecondaryOptionsForType method
-  void _loadSecondaryOptionsForType(String type) {
-    // Load makes first
-    setState(() {
-      _loadingMakes = true;
-      _loadingMechanisms = false; // Ensure this is false
-    });
-
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(type: DropdownType.firearmMakes, filterValue: type),
-    );
-  }
+  // // Replace the _loadSecondaryOptionsForType method
+  // void _loadSecondaryOptionsForType(String type) {
+  //   // Load makes first
+  //   setState(() {
+  //     _loadingMakes = true;
+  //     _loadingMechanisms = false; // Ensure this is false
+  //   });
+  //
+  //   context.read<ArmoryBloc>().add(
+  //     LoadDropdownOptionsEvent(type: DropdownType.firearmMakes, filterValue: type),
+  //   );
+  // }
 
 // Replace the _handleDropdownOptionsLoaded method
   void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
@@ -251,24 +246,24 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
         _firearmBrands = options;
         _loadingBrands = false;
 
-        // After brands loaded, load makes
-        final selectedType = _dropdownValues['type'];
-        if (selectedType != null) {
-          _loadSecondaryOptionsForType(selectedType);
-        }
+        // // After brands loaded, load makes
+        // final selectedType = _dropdownValues['type'];
+        // if (selectedType != null) {
+        //   _loadSecondaryOptionsForType(selectedType);
+        // }
       }
       else if (_loadingMakes) {
         _firearmMakes = options;
         _loadingMakes = false;
 
-        // After makes loaded, load mechanisms
-        setState(() => _loadingMechanisms = true);
-        context.read<ArmoryBloc>().add(
-          LoadDropdownOptionsEvent(
-              type: DropdownType.firearmFiringMechanisms,
-              filterValue: _dropdownValues['type']
-          ),
-        );
+        // // After makes loaded, load mechanisms
+        // setState(() => _loadingMechanisms = true);
+        // context.read<ArmoryBloc>().add(
+        //   LoadDropdownOptionsEvent(
+        //       type: DropdownType.firearmFiringMechanisms,
+        //       filterValue: _dropdownValues['type']
+        //   ),
+        // );
       }
       else if (_loadingMechanisms) {
         _firearmMechanisms = options;
@@ -290,41 +285,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
   }
 
 
-  void _loadGenerationsForBrandModel(String brand, String model) {
-    setState(() {
-      _loadingGenerations = true;
-      _firearmGenerations.clear();
-      _dropdownValues['generation'] = null;
-    });
 
-    // Custom values کے لیے بھی generations load کریں
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.firearmGenerations,
-        filterValue: brand, // Custom بھی pass کریں
-        secondaryFilter: model, // Custom بھی pass کریں
-      ),
-    );
-  }
-
-
-  void _loadCalibersForBrand(String brand) {
-    setState(() {
-      _loadingCalibers = true;
-      _calibers.clear();
-      _dropdownValues['caliber'] = null;
-    });
-
-    // Check if brand is custom - if so, show all calibers
-    final filterBrand = EnhancedDialogWidgets.isCustomValue(brand) ? null : brand;
-
-    context.read<ArmoryBloc>().add(
-      LoadDropdownOptionsEvent(
-        type: DropdownType.calibers,
-        filterValue: filterBrand,
-      ),
-    );
-  }
 
   @override
   void dispose() {
@@ -380,10 +341,10 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
               label: 'Firearm Type *',
               value: _dropdownValues['type'],
               options: [
-                const DropdownOption(value: 'rifle', label: 'Rifle'),
-                const DropdownOption(value: 'pistol', label: 'Pistol'),
-                const DropdownOption(value: 'revolver', label: 'Revolver'),
-                const DropdownOption(value: 'shotgun', label: 'Shotgun'),
+                const DropdownOption(value: 'Rifle', label: 'Rifle'),
+                const DropdownOption(value: 'Pistol', label: 'Pistol'),
+                const DropdownOption(value: 'Revolver', label: 'Revolver'),
+                const DropdownOption(value: 'Shotgun', label: 'Shotgun'),
               ],
               onChanged: (value) {
                 setState(() => _dropdownValues['type'] = value);

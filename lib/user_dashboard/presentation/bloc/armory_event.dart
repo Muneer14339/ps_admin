@@ -98,29 +98,17 @@ class AddLoadoutEvent extends ArmoryEvent {
 
 class LoadDropdownOptionsEvent extends ArmoryEvent {
   final DropdownType type;
-  final String? filterValue;
-  final String? secondaryFilter;
-  final String? tertiaryFilter;    // Add this
-  final String? quaternaryFilter;  // Add this
-  final String? quinaryFilter;     // Add this
+  final String? filterValue;// Add this
 
   const LoadDropdownOptionsEvent({
     required this.type,
-    this.filterValue,
-    this.secondaryFilter,
-    this.tertiaryFilter,    // Add this
-    this.quaternaryFilter,  // Add this
-    this.quinaryFilter,     // Add this
+    this.filterValue,   // Add this
   });
 
   @override
   List<Object> get props => [
     type,
-    filterValue ?? '',
-    secondaryFilter ?? '',
-    tertiaryFilter ?? '',     // Add this
-    quaternaryFilter ?? '',   // Add this
-    quinaryFilter ?? '',      // Add this
+    filterValue ?? '',    // Add this
   ];
 }
 

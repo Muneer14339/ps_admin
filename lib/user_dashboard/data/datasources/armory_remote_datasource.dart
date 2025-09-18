@@ -42,11 +42,11 @@ abstract class ArmoryRemoteDataSource {
 
   // Dropdown options with filtering support
   Future<List<DropdownOption>> getFirearmBrands([String? type]);
-  Future<List<DropdownOption>> getFirearmModels( [String? brand,String? type]);
-  Future<List<DropdownOption>> getFirearmGenerations( [String? brand, String? model,String? type]);
-  Future<List<DropdownOption>> getFirearmFiringMechanisms([String? type, String? caliber]);
-  Future<List<DropdownOption>> getFirearmMakes([String? type, String? brand, String? model, String? generation, String? caliber]);
-  Future<List<DropdownOption>> getCalibers([String? brand, String? model, String? generation]);
+  Future<List<DropdownOption>> getFirearmModels( [String? brand]);
+  Future<List<DropdownOption>> getFirearmGenerations( [ String? model]);
+  Future<List<DropdownOption>> getFirearmFiringMechanisms( [String? caliber]);
+  Future<List<DropdownOption>> getFirearmMakes([String?  firingMechanism,]);
+  Future<List<DropdownOption>> getCalibers([String? generation,]);
   Future<List<DropdownOption>> getAmmunitionBrands();
   Future<List<DropdownOption>> getBulletTypes([String? caliber]);
 
@@ -63,12 +63,52 @@ abstract class ArmoryRemoteDataSource {
 
 class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   final FirebaseFirestore firestore;
-
-  // Cache for dropdown data to avoid repeated Firebase queries
+  // Caches
   List<Map<String, dynamic>>? _firearmsCache;
   List<Map<String, dynamic>>? _ammunitionCache;
+  List<Map<String, dynamic>>? _userFirearmsCache;
+  List<Map<String, dynamic>>? _userAmmunitionCache;
+
+// Filtered lists
+  List<Map<String, dynamic>>? filteredFirearmBrands;
+  List<Map<String, dynamic>>? filteredFirearmModel;
+  List<Map<String, dynamic>>? filteredFirearmGeneration;
+  List<Map<String, dynamic>>? filteredFirearmCaliber;
+  List<Map<String, dynamic>>? filteredFirearmFiringMechanism;
+  List<Map<String, dynamic>>? filteredFirearmMakes;
+
+  List<Map<String, dynamic>>? filteredAmmoBrands;
+  List<Map<String, dynamic>>? filteredAmmoCaliber;
+  List<Map<String, dynamic>>? filteredAmmoBulletWeight;
+
+  /// Call this ONCE (e.g., in a repository init method or when opening the Armory screen)
+  Future<void> initializeArmoryData() async {
+    _firearmsCache ??= await _getFirearmsData();
+    _ammunitionCache ??= await _getAmmunitionData();
+    _userFirearmsCache ??= await _getUserFirearmsData();
+    _userAmmunitionCache ??= await _getUserAmmunitionData();
+  }
+
+  List<Map<String, dynamic>> get allFirearmsData =>
+      [...?_firearmsCache, ...?_userFirearmsCache];
+  List<Map<String, dynamic>> get allAmmoData =>
+      [...?_ammunitionCache, ...?_userAmmunitionCache];
+
 
   ArmoryRemoteDataSourceImpl({required this.firestore});
+
+  List<Map<String, dynamic>> _filterData({
+    required List<Map<String, dynamic>> source,
+    String? field,
+    String? value,
+  })
+  {
+    if (value == null || value.isEmpty || value.startsWith('__CUSTOM__')) {
+      return source;
+    }
+    return source.where((item) => item[field]?.toString() == value).toList();
+  }
+
 
   // Load all firearms data once and cache it
   Future<List<Map<String, dynamic>>> _getFirearmsData() async {
@@ -477,156 +517,30 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
 
 // Updated dropdown methods
 
-  @override
-  Future<List<DropdownOption>> getCalibers([
-    String? brand, String? model, String? generation]) async
-  {
-    try {
-      final firearmsRefData = await _getFirearmsData();
-      final ammoRefData = await _getAmmunitionData();
-      final userFirearmsData = await _getUserFirearmsData();
-      final userAmmoData = await _getUserAmmunitionData();
 
-      final calibers = <String>{};
-      final allFirearmsData = [...firearmsRefData, ...userFirearmsData];
-      final allAmmoData = [...ammoRefData, ...userAmmoData];
 
-      // Filter firearms data based on brand, model, generation
-      final filteredFirearms = allFirearmsData.where((data) {
-        bool matches = true;
-
-        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
-          matches = matches && data['brand']?.toString() == brand;
-        }
-        if (model?.isNotEmpty == true && !_isCustomValue(model)) {
-          matches = matches && data['model']?.toString() == model;
-        }
-        if (generation?.isNotEmpty == true && !_isCustomValue(generation)) {
-          matches = matches && data['generation']?.toString() == generation;
-        }
-
-        return matches;
-      });
-
-      // Also include ammo data filtered by brand if available
-      final filteredAmmo = allAmmoData.where((data) {
-        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
-          return data['brand']?.toString() == brand;
-        }
-        return true;
-      });
-
-      // Collect calibers from both sources
-      for (final data in [...filteredFirearms, ...filteredAmmo]) {
-        final caliber = data['caliber']?.toString() ?? '';
-        if (caliber.isNotEmpty) calibers.add(caliber);
-      }
-
-      final caliberList = calibers.toList();
-      caliberList.sort();
-      return caliberList.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
-    } catch (e) {
-      throw Exception('Failed to get calibers: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getFirearmFiringMechanisms([
-    String? type, String? caliber]) async
-  {
-    try {
-      final firearmsData = await _getFirearmsData();
-      final userFirearmsData = await _getUserFirearmsData();
-      final allData = [...firearmsData, ...userFirearmsData];
-
-      final filteredData = allData.where((data) {
-        bool matches = true;
-
-        if (type?.isNotEmpty == true && !_isCustomValue(type)) {
-          matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
-        }
-        if (caliber?.isNotEmpty == true && !_isCustomValue(caliber)) {
-          matches = matches && data['caliber']?.toString() == caliber;
-        }
-
-        return matches;
-      });
-
-      final mechanisms = filteredData
-          .map((data) => data['firing_machanism']?.toString() ?? '')
-          .where((mech) => mech.isNotEmpty)
-          .toSet()
-          .toList();
-
-      mechanisms.sort();
-      return mechanisms.map((mech) => DropdownOption(value: mech, label: mech)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firing mechanisms: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getFirearmMakes([
-    String? type, String? brand, String? model, String? generation, String? caliber]) async
-  {
-    try {
-      final referenceData = await _getFirearmsData();
-      final userData = await _getUserFirearmsData();
-      final allData = [...referenceData, ...userData];
-
-      final filteredData = allData.where((data) {
-        bool matches = true;
-
-        if (type?.isNotEmpty == true && !_isCustomValue(type)) {
-          matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
-        }
-        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
-          matches = matches && data['brand']?.toString() == brand;
-        }
-        if (model?.isNotEmpty == true && !_isCustomValue(model)) {
-          matches = matches && data['model']?.toString() == model;
-        }
-        if (generation?.isNotEmpty == true && !_isCustomValue(generation)) {
-          matches = matches && data['generation']?.toString() == generation;
-        }
-        if (caliber?.isNotEmpty == true && !_isCustomValue(caliber)) {
-          matches = matches && data['caliber']?.toString() == caliber;
-        }
-
-        return matches;
-      });
-
-      final makes = filteredData
-          .map((data) => data['make']?.toString() ?? '')
-          .where((make) => make.isNotEmpty)
-          .toSet()
-          .toList();
-
-      makes.sort();
-      return makes.map((make) => DropdownOption(value: make, label: make)).toList();
-    } catch (e) {
-      throw Exception('Failed to get firearm makes: $e');
-    }
-  }
 
   // Helper method to check if value is custom
   bool _isCustomValue(String? value) {
     return value != null && value.startsWith('__CUSTOM__');
   }
 
+
   @override
   Future<List<DropdownOption>> getFirearmBrands([String? type]) async {
     try {
-      final referenceData = await _getFirearmsData();
-      final userData = await _getUserFirearmsData();
-
-      final brands = _mergeAndDeduplicateStrings(
-          referenceData,
-          userData,
-          'brand',
-          type?.isNotEmpty == true ? 'type' : null,
-          type
+      await initializeArmoryData();
+      final filtered = _filterData(
+        source: allFirearmsData,
+        field: 'type',
+        value: type,
       );
+
+      final brands = filtered.map((e) => e['brand']?.toString() ?? '').where((b) => b.isNotEmpty).toSet().toList();
+      brands.sort();
+      filteredFirearmBrands = filtered; // Save for next filters
+      filteredFirearmModel = filteredFirearmGeneration = filteredFirearmCaliber =
+          filteredFirearmFiringMechanism = filteredFirearmMakes = null;
 
       return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
     } catch (e) {
@@ -635,33 +549,20 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   }
 
   @override
-  Future<List<DropdownOption>> getFirearmModels([ String? type, String? brand]) async {
+  Future<List<DropdownOption>> getFirearmModels([String? brand]) async {
     try {
-      final referenceData = await _getFirearmsData();
-      final userData = await _getUserFirearmsData();
-      final allData = [...referenceData, ...userData];
+      if (filteredFirearmBrands == null) return [];
+      final filtered = _filterData(
+        source: filteredFirearmBrands!,
+        field: 'brand',
+        value: brand,
+      );
 
-      final filteredData = allData.where((data) {
-        bool matches = true;
-
-        if (type?.isNotEmpty == true && !_isCustomValue(type)) {
-          matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
-        }
-        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
-          matches = matches && data['brand']?.toString() == brand;
-        }
-
-
-        return matches;
-      });
-
-      final models = filteredData
-          .map((data) => data['model']?.toString() ?? '')
-          .where((m) => m.isNotEmpty)
-          .toSet()
-          .toList();
-
+      final models = filtered.map((e) => e['model']?.toString() ?? '').where((m) => m.isNotEmpty).toSet().toList();
       models.sort();
+      filteredFirearmModel = filtered;
+      filteredFirearmGeneration = filteredFirearmCaliber =
+          filteredFirearmFiringMechanism = filteredFirearmMakes = null;
       return models.map((m) => DropdownOption(value: m, label: m)).toList();
     } catch (e) {
       throw Exception('Failed to get firearm models: $e');
@@ -669,39 +570,107 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   }
 
   @override
-  Future<List<DropdownOption>> getFirearmGenerations([String? type, String? brand, String? model]) async {
+  Future<List<DropdownOption>> getFirearmGenerations([String? model]) async {
     try {
-      final referenceData = await _getFirearmsData();
-      final userData = await _getUserFirearmsData();
-      final allData = [...referenceData, ...userData];
+      if (filteredFirearmModel == null) return [];
+      final filtered = _filterData(
+        source: filteredFirearmModel!,
+        field: 'model',
+        value: model,
+      );
 
-      final filteredData = allData.where((data) {
-        bool matches = true;
-
-        if (type?.isNotEmpty == true && !_isCustomValue(type)) {
-          matches = matches && data['type']?.toString().toLowerCase() == type?.toLowerCase();
-        }
-        if (brand?.isNotEmpty == true && !_isCustomValue(brand)) {
-          matches = matches && data['brand']?.toString() == brand;
-        }
-        if (model?.isNotEmpty == true && !_isCustomValue(model)) {
-          matches = matches && data['model']?.toString() == model;
-        }
-
-
-        return matches;
-      });
-
-      final generations = filteredData
-          .map((data) => data['generation']?.toString() ?? '')
+      final generations = filtered
+          .map((e) => e['generation']?.toString() ?? '')
           .where((g) => g.isNotEmpty)
           .toSet()
           .toList();
-
       generations.sort();
+      filteredFirearmGeneration = filtered;
+
+      // Reset deeper filters
+      filteredFirearmCaliber = filteredFirearmFiringMechanism = filteredFirearmMakes = null;
       return generations.map((g) => DropdownOption(value: g, label: g)).toList();
     } catch (e) {
       throw Exception('Failed to get firearm generations: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getCalibers([String? generation]) async
+  {
+    try {
+      if (filteredFirearmGeneration == null) return [];
+      final filtered = _filterData(
+        source: filteredFirearmGeneration!,
+        field: 'generation',
+        value: generation,
+      );
+
+      final calibers = filtered
+          .map((e) => e['caliber']?.toString() ?? '')
+          .where((c) => c.isNotEmpty)
+          .toSet()
+          .toList();
+      calibers.sort();
+      filteredFirearmCaliber = filtered;
+
+      // Reset deeper filters
+      filteredFirearmFiringMechanism = filteredFirearmMakes = null;
+      return calibers.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
+    } catch (e) {
+      throw Exception('Failed to get calibers: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getFirearmFiringMechanisms([String? caliber]) async
+  {
+    try {
+      if (filteredFirearmCaliber == null) return [];
+      final filtered = _filterData(
+        source: filteredFirearmCaliber!,
+        field: 'caliber',
+        value: caliber,
+      );
+
+      final mechanisms = filtered
+          .map((e) => e['firing_machanism']?.toString() ?? '')
+          .where((m) => m.isNotEmpty)
+          .toSet()
+          .toList();
+      mechanisms.sort();
+      filteredFirearmFiringMechanism = filtered;
+
+      // Reset deeper filter
+      filteredFirearmMakes = null;
+      return mechanisms.map((mech) => DropdownOption(value: mech, label: mech)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firing mechanisms: $e');
+    }
+  }
+
+  @override
+  Future<List<DropdownOption>> getFirearmMakes([
+    String?  firingMechanism]) async
+  {
+    try {
+      if (filteredFirearmFiringMechanism == null) return [];
+      final filtered = _filterData(
+        source: filteredFirearmFiringMechanism!,
+        field: 'firing_machanism',
+        value: firingMechanism,
+      );
+
+      final makes = filtered
+          .map((e) => e['make']?.toString() ?? '')
+          .where((m) => m.isNotEmpty)
+          .toSet()
+          .toList();
+      makes.sort();
+      filteredFirearmMakes = filtered;
+      return makes.map((make) => DropdownOption(value: make, label: make)).toList();
+    } catch (e) {
+      throw Exception('Failed to get firearm makes: $e');
     }
   }
 
