@@ -1,13 +1,17 @@
 // lib/user_dashboard/presentation/widgets/tool_item_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../core/theme/app_theme.dart';
+import 'common/common_delete_dilogue.dart';
 import 'common/common_widgets.dart';
+import '../bloc/armory_bloc.dart';
 
 class ToolItemCard extends StatelessWidget {
   final ArmoryTool tool;
+  final String userId;
 
-  const ToolItemCard({super.key, required this.tool});
+  const ToolItemCard({super.key, required this.tool, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +22,34 @@ class ToolItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            tool.name,
-            style: AppTextStyles.itemTitle,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  tool.name,
+                  style: AppTextStyles.itemTitle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // Delete icon
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.errorColor,
+                  size: 20,
+                ),
+                tooltip: 'Delete Tool',
+                onPressed: () {
+                  CommonDialogs.showDeleteDialog(
+                    context: context,
+                    userId: userId,
+                    armoryType: ArmoryTabType.tools,
+                    itemName: tool.name,
+                    item: tool,
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: AppSizes.smallSpacing),
           Wrap(

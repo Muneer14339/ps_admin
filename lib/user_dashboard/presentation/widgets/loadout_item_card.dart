@@ -1,13 +1,17 @@
 // lib/user_dashboard/presentation/widgets/loadout_item_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../core/theme/app_theme.dart';
+import 'common/common_delete_dilogue.dart';
 import 'common/common_widgets.dart';
+import '../bloc/armory_bloc.dart';
 
 class LoadoutItemCard extends StatelessWidget {
   final ArmoryLoadout loadout;
+  final String userId;
 
-  const LoadoutItemCard({super.key, required this.loadout});
+  const LoadoutItemCard({super.key, required this.loadout, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -18,11 +22,34 @@ class LoadoutItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Loadout Name
-          Text(
-            loadout.name,
-            style: AppTextStyles.itemTitle,
-            overflow: TextOverflow.ellipsis,
+          // Loadout Name with Delete icon
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  loadout.name,
+                  style: AppTextStyles.itemTitle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.errorColor,
+                  size: 20,
+                ),
+                tooltip: 'Delete Loadout',
+                onPressed: () {
+                  CommonDialogs.showDeleteDialog(
+                    context: context,
+                    userId: userId,
+                    armoryType: ArmoryTabType.loadouts,
+                    itemName: loadout.name,
+                    item: loadout,
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: AppSizes.smallSpacing),
 

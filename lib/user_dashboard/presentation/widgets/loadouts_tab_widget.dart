@@ -64,7 +64,7 @@ class LoadoutsTabWidget extends StatelessWidget {
 
       return Column(
         children: state.loadouts
-            .map((loadout) => LoadoutItemCard(loadout: loadout))
+            .map((loadout) => LoadoutItemCard(loadout: loadout, userId: userId,))
             .toList(),
       );
     }

@@ -137,7 +137,7 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
       title: 'Tools & Equipment',
       subtitle: 'cleaning kits, torque wrenches, chronographs',
       initiallyExpanded: _tools.isNotEmpty,
-      children: _tools.map((tool) => ToolItemCard(tool: tool)).toList(),
+      children: _tools.map((tool) => ToolItemCard(tool: tool,userId: widget.userId,)).toList(),
     );
   }
 
@@ -146,7 +146,7 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
       title: 'Maintenance Logs',
       subtitle: 'cleaning, lubrication, repairs, inspections',
       initiallyExpanded: _maintenance.isNotEmpty,
-      children: _maintenance.map((maintenance) => MaintenanceItemCard(maintenance: maintenance)).toList(),
+      children: _maintenance.map((maintenance) => MaintenanceItemCard(maintenance: maintenance, userId: widget.userId,)).toList(),
     );
   }
 

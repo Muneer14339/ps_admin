@@ -100,7 +100,7 @@ class GearTabWidget extends StatelessWidget {
     return CommonWidgets.buildExpandableSection(
       title: title,
       subtitle: subtitle,
-      children: items.map((gear) => GearItemCard(gear: gear)).toList(),
+      children: items.map((gear) => GearItemCard(gear: gear, userId: userId,)).toList(),
     );
   }
 

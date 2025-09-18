@@ -1,13 +1,17 @@
 // lib/user_dashboard/presentation/widgets/maintenance_item_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_maintenance.dart';
 import '../core/theme/app_theme.dart';
+import 'common/common_delete_dilogue.dart';
 import 'common/common_widgets.dart';
+import '../bloc/armory_bloc.dart';
 
 class MaintenanceItemCard extends StatelessWidget {
   final ArmoryMaintenance maintenance;
+  final String userId;
 
-  const MaintenanceItemCard({super.key, required this.maintenance});
+  const MaintenanceItemCard({super.key, required this.maintenance, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +32,24 @@ class MaintenanceItemCard extends StatelessWidget {
                 ),
               ),
               CommonWidgets.buildTag(maintenance.assetType),
+              // Delete icon
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.errorColor,
+                  size: 20,
+                ),
+                tooltip: 'Delete Maintenance',
+                onPressed: () {
+                  CommonDialogs.showDeleteDialog(
+                    context: context,
+                    userId: userId,
+                    armoryType: ArmoryTabType.maintenance,
+                    itemName: maintenance.maintenanceType,
+                    item: maintenance,
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: AppSizes.smallSpacing),

@@ -1,13 +1,17 @@
 // lib/user_dashboard/presentation/widgets/gear_item_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_gear.dart';
 import '../core/theme/app_theme.dart';
+import 'common/common_delete_dilogue.dart';
 import 'common/common_widgets.dart';
+import '../bloc/armory_bloc.dart';
 
 class GearItemCard extends StatelessWidget {
   final ArmoryGear gear;
+  final String userId;
 
-  const GearItemCard({super.key, required this.gear});
+  const GearItemCard({super.key, required this.gear, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,24 @@ class GearItemCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSizes.itemSpacing),
               CommonWidgets.buildTag(gear.category),
+              // Delete icon
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.errorColor,
+                  size: 20,
+                ),
+                tooltip: 'Delete Gear',
+                onPressed: () {
+                  CommonDialogs.showDeleteDialog(
+                    context: context,
+                    userId: userId,
+                    armoryType: ArmoryTabType.gear,
+                    itemName: gear.model,
+                    item: gear,
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: AppSizes.smallSpacing),

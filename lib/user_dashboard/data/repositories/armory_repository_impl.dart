@@ -469,5 +469,15 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> deleteMaintenance(String userId, String maintenanceId) async{
+    try {
+      await remoteDataSource.deleteMaintenance(userId, maintenanceId);
+      return const Right(null);
+    } catch (e) {
+      return Left(FileFailure(e.toString()));
+    }
+  }
+
 
 }

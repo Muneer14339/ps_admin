@@ -55,8 +55,7 @@ abstract class ArmoryRemoteDataSource {
   // Maintenance
   Future<List<ArmoryMaintenanceModel>> getMaintenance(String userId);
   Future<void> addMaintenance(String userId, ArmoryMaintenanceModel maintenance);
-
-
+  Future<void> deleteMaintenance(String userId, String maintenanceId);
 
   // Method to clear cache when needed
   void clearCache();
@@ -159,6 +158,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .get();
 
       return querySnapshot.docs
+          .where((doc) => !doc.data().containsKey('isDeleted'))
           .map((doc) => ArmoryFirearmModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
@@ -201,7 +201,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .doc(userId)
           .collection('firearms')
           .doc(firearmId)
-          .delete();
+          .update({'isDeleted': true});
     } catch (e) {
       throw Exception('Failed to delete firearm: $e');
     }
@@ -219,6 +219,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .get();
 
       return querySnapshot.docs
+          .where((doc) => !doc.data().containsKey('isDeleted'))
           .map((doc) => ArmoryAmmunitionModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
@@ -261,7 +262,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .doc(userId)
           .collection('ammunition')
           .doc(ammunitionId)
-          .delete();
+          .update({'isDeleted': true});;
     } catch (e) {
       throw Exception('Failed to delete ammunition: $e');
     }
@@ -279,6 +280,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .get();
 
       return querySnapshot.docs
+          .where((doc) => !doc.data().containsKey('isDeleted'))
           .map((doc) => ArmoryGearModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
@@ -321,7 +323,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .doc(userId)
           .collection('gear')
           .doc(gearId)
-          .delete();
+          .update({'isDeleted': true});
     } catch (e) {
       throw Exception('Failed to delete gear: $e');
     }
@@ -338,6 +340,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .get();
 
       return querySnapshot.docs
+          .where((doc) => !doc.data().containsKey('isDeleted'))
           .map((doc) => ArmoryToolModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
@@ -380,7 +383,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .doc(userId)
           .collection('tools')
           .doc(toolId)
-          .delete();
+          .update({'isDeleted': true});
     } catch (e) {
       throw Exception('Failed to delete tool: $e');
     }
@@ -397,6 +400,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .get();
 
       return querySnapshot.docs
+          .where((doc) => !doc.data().containsKey('isDeleted'))
           .map((doc) => ArmoryLoadoutModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
@@ -439,7 +443,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .doc(userId)
           .collection('loadouts')
           .doc(loadoutId)
-          .delete();
+          .update({'isDeleted': true});
     } catch (e) {
       throw Exception('Failed to delete loadout: $e');
     }
@@ -457,7 +461,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .collection('firearms')
           .get();
 
-      return querySnapshot.docs.map((doc) => doc.data()).toList();
+      return querySnapshot.docs.where((doc) => !doc.data().containsKey('isDeleted')).map((doc) => doc.data()).toList();
     } catch (e) {
       return []; // Error case میں empty list return کریں
     }
@@ -474,7 +478,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .collection('ammunition')
           .get();
 
-      return querySnapshot.docs.map((doc) => doc.data()).toList();
+      return querySnapshot.docs.where((doc) => !doc.data().containsKey('isDeleted')).map((doc) => doc.data()).toList();
     } catch (e) {
       return []; // Error case میں empty list return کریں
     }
@@ -711,6 +715,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .get();
 
       return querySnapshot.docs
+          .where((doc) => !doc.data().containsKey('isDeleted'))
           .map((doc) => ArmoryMaintenanceModel.fromMap(doc.data(), doc.id))
           .toList();
     } catch (e) {
@@ -728,6 +733,20 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .add(maintenance.toMap());
     } catch (e) {
       throw Exception('Failed to add maintenance: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteMaintenance(String userId, String maintenanceId) async {
+    try {
+      await firestore
+          .collection('armory')
+          .doc(userId)
+          .collection('maintenance')
+          .doc(maintenanceId)
+          .update({'isDeleted': true});
+    } catch (e) {
+      throw Exception('Failed to delete tool: $e');
     }
   }
 }

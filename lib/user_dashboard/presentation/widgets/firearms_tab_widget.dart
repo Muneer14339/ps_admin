@@ -65,7 +65,7 @@ class FirearmsTabWidget extends StatelessWidget {
 
       return Column(
         children: state.firearms
-            .map((firearm) => FirearmItemCard(firearm: firearm))
+            .map((firearm) => FirearmItemCard(firearm: firearm,userId: userId,))
             .toList(),
       );
     }

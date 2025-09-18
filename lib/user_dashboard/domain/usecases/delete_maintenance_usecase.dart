@@ -12,6 +12,6 @@ class DeleteMaintenanceUseCase implements UseCase<void, DeleteMaintenanceParams>
 
   @override
   Future<Either<Failure, void>> call(DeleteMaintenanceParams params) async {
-    return await repository.deleteTool(params.userId, params.maintenance.id!);
+    return await repository.deleteMaintenance(params.userId, params.maintenance.id!);
   }
 }

@@ -66,5 +66,7 @@ abstract class ArmoryRepository {
 
   Future<Either<Failure, List<ArmoryMaintenance>>> getMaintenance(String userId);
   Future<Either<Failure, void>> addMaintenance(String userId, ArmoryMaintenance maintenance);
+  Future<Either<Failure, void>> deleteMaintenance(String userId, String maintenanceId);
+
 
 }

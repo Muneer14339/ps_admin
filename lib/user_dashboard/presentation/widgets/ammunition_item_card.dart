@@ -1,13 +1,17 @@
 // lib/user_dashboard/presentation/widgets/ammunition_item_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/armory_ammunition.dart';
 import '../core/theme/app_theme.dart';
+import 'common/common_delete_dilogue.dart';
 import 'common/common_widgets.dart';
+import '../bloc/armory_bloc.dart';
 
 class AmmunitionItemCard extends StatelessWidget {
   final ArmoryAmmunition ammunition;
+  final String userId;
 
-  const AmmunitionItemCard({super.key, required this.ammunition});
+  const AmmunitionItemCard({super.key, required this.ammunition, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +32,24 @@ class AmmunitionItemCard extends StatelessWidget {
                 ),
               ),
               CommonWidgets.buildTag(ammunition.caliber),
+              // Delete icon
+              IconButton(
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.errorColor,
+                  size: 20,
+                ),
+                tooltip: 'Delete Ammunition',
+                onPressed: () {
+                  CommonDialogs.showDeleteDialog(
+                    context: context,
+                    userId: userId,
+                    armoryType: ArmoryTabType.ammunition,
+                    itemName: '${ammunition.brand} ${ammunition.line ?? ''}',
+                    item: ammunition,
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: AppSizes.smallSpacing),
