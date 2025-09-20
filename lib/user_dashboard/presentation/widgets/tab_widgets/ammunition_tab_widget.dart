@@ -1,97 +1,90 @@
-// lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/armory_bloc.dart';
 import '../../bloc/armory_event.dart';
 import '../../bloc/armory_state.dart';
-import '../../core/theme/app_theme.dart';
-import '../add_dialogs/add_ammunition_dialog.dart';
 import '../add_forms/add_ammunition_form.dart';
 import '../ammunition_item_card.dart';
-import '../armory_card.dart';
 import '../common/common_widgets.dart';
-import '../common/inline_form_wrapper.dart';
+import '../common/form_wrapper_widget.dart';
 import '../common/responsive_grid_widget.dart';
 import '../empty_state_widget.dart';
 import 'armory_tab_view.dart';
+import 'firearms_tab_widget.dart';
 
 class AmmunitionTabWidget extends StatelessWidget {
   final String userId;
 
-  const AmmunitionTabWidget({super.key, required this.userId});
+  AmmunitionTabWidget({super.key, required this.userId});
+
+  List<Widget> _lastAmmoCards = [];
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<ArmoryBloc, ArmoryState>(
-      listener: (context, state) {
-        if (state is ArmoryActionSuccess) {
-          context.read<ArmoryBloc>().add(const HideFormEvent());
+    return FormWrapperWidget(
+      userId: userId,
+      tabType: ArmoryTabType.ammunition,
+      formTitle: 'Add Ammunition',
+      formBadge: 'Level 1 UI',
+      cardTitle: 'Ammunition',
+      cardDescription:
+      'Catalog brands and track lots with chrono data for better analytics.',
+      formBuilder: (userId) => AddAmmunitionForm(userId: userId),
+      listBuilder: _buildAmmunitionList,
+      getItemCount: (state) =>
+      state is AmmunitionLoaded ? state.ammunition.length : _lastAmmoCards.length,
+      onAddPressed: (context) {
+        // Check if firearms exist using FirearmsTabWidget.lastFirearmCards
+        if (FirearmsTabWidget.lastFirearmCards.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.successColor,
+            const SnackBar(
+              content: Text('Please add a firearm first.'),
+              duration: Duration(seconds: 2),
             ),
           );
-        } else if (state is ArmoryError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.errorColor,
-            ),
+        } else {
+          // Otherwise show the form normally
+          context.read<ArmoryBloc>().add(
+            ShowAddFormEvent(tabType: ArmoryTabType.ammunition),
           );
         }
-      },
-      builder: (context, state) {
-        // Show inline form
-        if (state is ShowingAddForm && state.tabType == ArmoryTabType.ammunition) {
-          return InlineFormWrapper(
-            title: 'Add Ammunition',
-            badge: 'Level 1 UI',
-            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
-            child: AddAmmunitionForm(userId: userId),
-          );
-        }
-
-        // Show normal list view
-        return ArmoryCard(
-          title: 'Ammunition',
-          description: 'Catalog brands and track lots with chrono data for better analytics.',
-          onAddPressed: () => context.read<ArmoryBloc>().add(
-            const ShowAddFormEvent(tabType: ArmoryTabType.ammunition),
-          ),
-          itemCount: state is AmmunitionLoaded ? state.ammunition.length : null,
-          isLoading: state is ArmoryLoadingAction,
-          child: _buildAmmunitionList(state),
-        );
       },
     );
   }
 
   Widget _buildAmmunitionList(ArmoryState state) {
     if (state is ArmoryLoading) {
-      return CommonWidgets.buildLoading(message: 'Loading ammunition...');
+      // Loading dikhate waqt agar cache hai to woh show karein
+      return _lastAmmoCards.isNotEmpty
+          ? ResponsiveGridWidget(children: _lastAmmoCards)
+          : CommonWidgets.buildLoading(message: 'Loading ammunition...');
     }
 
     if (state is AmmunitionLoaded) {
       if (state.ammunition.isEmpty) {
+        _lastAmmoCards = []; // cache clear karein
         return const EmptyStateWidget(
           message: 'No ammunition lots yet.',
           icon: Icons.add_circle_outline,
         );
       }
 
-      final ammoCards = state.ammunition
-          .map((ammo) => AmmunitionItemCard(ammunition: ammo, userId: userId))
+      _lastAmmoCards = state.ammunition
+          .map((ammo) =>
+          AmmunitionItemCard(ammunition: ammo, userId: userId))
           .toList();
 
-      return ResponsiveGridWidget(children: ammoCards);
+      return ResponsiveGridWidget(children: _lastAmmoCards);
     }
 
     if (state is ArmoryError) {
       return CommonWidgets.buildError(state.message);
     }
 
-    return const EmptyStateWidget(
+    // Unknown state: agar cache hai to woh show karein
+    return _lastAmmoCards.isNotEmpty
+        ? ResponsiveGridWidget(children: _lastAmmoCards)
+        : const EmptyStateWidget(
       message: 'No ammunition lots yet.',
       icon: Icons.add_circle_outline,
     );
