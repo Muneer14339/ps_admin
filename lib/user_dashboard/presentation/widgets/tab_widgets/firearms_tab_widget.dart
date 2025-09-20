@@ -1,10 +1,15 @@
-// lib/user_dashboard/presentation/widgets/tab_widgets/firearms_tab_widget.dart
+// lib/user_dashboard/presentation/widgets/firearms_tab_widget.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
 import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
 import '../add_forms/add_firearm_form.dart';
+import '../armory_card.dart';
 import '../common/common_widgets.dart';
-import '../common/form_wrapper_widget.dart';
-import '../common/responsive_grid_widget.dart';
+import '../common/inline_form_wrapper.dart';
+import '../common/responsive_grid_widget.dart'; // Import the new widget
 import '../empty_state_widget.dart';
 import '../firearm_item_card.dart';
 import 'armory_tab_view.dart';
@@ -12,61 +17,84 @@ import 'armory_tab_view.dart';
 class FirearmsTabWidget extends StatelessWidget {
   final String userId;
 
-  FirearmsTabWidget({super.key, required this.userId});
-
-  List<Widget> _lastFirearmCards = [];
+  const FirearmsTabWidget({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
-    return FormWrapperWidget(
-      userId: userId,
-      tabType: ArmoryTabType.firearms,
-      formTitle: 'Add Firearm',
-      formBadge: 'Level 1 UI',
-      cardTitle: 'Firearms',
-      cardDescription: 'Track each gun as an asset or keep a simple quantity.',
-      formBuilder: (userId) => AddFirearmForm(userId: userId),
-      listBuilder: _buildFirearmsList,
-      getItemCount: (state) =>
-      state is FirearmsLoaded ? state.firearms.length : _lastFirearmCards.length,
+    return BlocConsumer<ArmoryBloc, ArmoryState>(
+      listener: (context, state) {
+        if (state is ArmoryActionSuccess) {
+          // Hide form and show success message
+          context.read<ArmoryBloc>().add(const HideFormEvent());
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.successColor,
+            ),
+          );
+        } else if (state is ArmoryError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.errorColor,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        // Show inline form if in ShowingAddForm state
+        if (state is ShowingAddForm && state.tabType == ArmoryTabType.firearms) {
+          return InlineFormWrapper(
+            title: 'Add Firearm',
+            badge: 'Level 1 UI',
+            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            child: AddFirearmForm(userId: userId),
+          );
+        }
+
+        // Show normal list view
+        return ArmoryCard(
+          title: 'Firearms',
+          description: 'Track each gun as an asset or keep a simple quantity.',
+          onAddPressed: () => context.read<ArmoryBloc>().add(
+            const ShowAddFormEvent(tabType: ArmoryTabType.firearms),
+          ),
+          itemCount: state is FirearmsLoaded ? state.firearms.length : null,
+          isLoading: state is ArmoryLoadingAction,
+          child: _buildFirearmsList(state),
+        );
+      },
     );
   }
 
   Widget _buildFirearmsList(ArmoryState state) {
     if (state is ArmoryLoading) {
-      // Loading dikhate hue bhi last data preserve karein
-      return _lastFirearmCards.isNotEmpty
-          ? ResponsiveGridWidget(children: _lastFirearmCards)
-          : CommonWidgets.buildLoading(message: 'Loading firearms...');
+      return CommonWidgets.buildLoading(message: 'Loading firearms...');
     }
 
     if (state is FirearmsLoaded) {
       if (state.firearms.isEmpty) {
-        _lastFirearmCards = []; // clear cache jab actual empty aajaye
         return const EmptyStateWidget(
           message: 'No firearms added yet.',
           icon: Icons.add_circle_outline,
         );
       }
 
-      _lastFirearmCards = state.firearms
+      final firearmCards = state.firearms
           .map((firearm) => FirearmItemCard(
         firearm: firearm,
         userId: userId,
       ))
           .toList();
 
-      return ResponsiveGridWidget(children: _lastFirearmCards);
+      return ResponsiveGridWidget(children: firearmCards);
     }
 
     if (state is ArmoryError) {
       return CommonWidgets.buildError(state.message);
     }
 
-    // Agar koi aur state ho to last non-empty list preserve karein
-    return _lastFirearmCards.isNotEmpty
-        ? ResponsiveGridWidget(children: _lastFirearmCards)
-        : const EmptyStateWidget(
+    return const EmptyStateWidget(
       message: 'No firearms added yet.',
       icon: Icons.add_circle_outline,
     );

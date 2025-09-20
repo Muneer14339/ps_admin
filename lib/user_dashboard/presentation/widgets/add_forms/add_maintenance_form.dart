@@ -107,7 +107,7 @@ class _AddMaintenanceFormState extends State<AddMaintenanceForm> {
         } else if (state is GearLoaded) {
           _handleGearLoaded(state.gear);
         } else if (state is ArmoryActionSuccess) {
-          Navigator.of(context).pop();
+          context.read<ArmoryBloc>().add(const HideFormEvent());
         }
       },
       child: Column(

@@ -50,7 +50,7 @@ class _AddGearFormState extends State<AddGearForm> {
     return BlocListener<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
         if (state is ArmoryActionSuccess) {
-          Navigator.of(context).pop();
+          context.read<ArmoryBloc>().add(const HideFormEvent());
         }
       },
       child: Column(

@@ -296,7 +296,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
         if (state is DropdownOptionsLoaded) {
           _handleDropdownOptionsLoaded(state.options);
         } else if (state is ArmoryActionSuccess) {
-          Navigator.of(context).pop();
+          context.read<ArmoryBloc>().add(const HideFormEvent());
         }
       },
       child: Column(

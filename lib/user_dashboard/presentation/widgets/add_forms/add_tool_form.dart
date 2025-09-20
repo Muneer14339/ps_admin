@@ -51,7 +51,7 @@ class _AddToolFormState extends State<AddToolForm> {
     return BlocListener<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
         if (state is ArmoryActionSuccess) {
-          Navigator.of(context).pop();
+          context.read<ArmoryBloc>().add(const HideFormEvent());
         }
       },
       child: Column(
