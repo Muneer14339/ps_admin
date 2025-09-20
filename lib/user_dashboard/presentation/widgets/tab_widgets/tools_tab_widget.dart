@@ -1,20 +1,24 @@
 // lib/user_dashboard/presentation/widgets/tools_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/armory_tool.dart';
-import '../../domain/entities/armory_maintenance.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'add_maintenance_dialog.dart';
-import 'add_tool_dialog.dart';
-import 'armory_card.dart';
-import 'common/common_widgets.dart';
-import 'common/responsive_grid_widget.dart';
-import 'empty_state_widget.dart';
-import 'maintenance_item_card.dart';
-import 'tool_item_card.dart';
+
+import '../../../domain/entities/armory_maintenance.dart';
+import '../../../domain/entities/armory_tool.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../add_forms/add_maintenance_form.dart';
+import '../add_forms/add_tool_form.dart';
+import '../armory_card.dart';
+import '../common/common_widgets.dart';
+import '../common/inline_form_wrapper.dart';
+import '../common/responsive_grid_widget.dart';
+import '../empty_state_widget.dart';
+import '../maintenance_item_card.dart';
+import '../tool_item_card.dart';
+import 'armory_tab_view.dart';
+
 
 class ToolsTabWidget extends StatefulWidget {
   final String userId;
@@ -48,18 +52,13 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
         } else if (state is MaintenanceLoaded) {
           setState(() => _maintenance = state.maintenance);
         } else if (state is ArmoryActionSuccess) {
+          context.read<ArmoryBloc>().add(const HideFormEvent());
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
               backgroundColor: AppColors.successColor,
             ),
           );
-          // Reload data after successful action
-          if (state.message.contains('Tool')) {
-            context.read<ArmoryBloc>().add(LoadToolsEvent(userId: widget.userId));
-          } else if (state.message.contains('Maintenance')) {
-            _loadMaintenanceData();
-          }
         } else if (state is ArmoryError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -70,10 +69,31 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
         }
       },
       builder: (context, state) {
+        // Show inline form for adding tool
+        if (state is ShowingAddForm && state.tabType == ArmoryTabType.tools) {
+          return InlineFormWrapper(
+            title: 'Add Tool',
+            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            child: AddToolForm(userId: widget.userId),
+          );
+        }
+
+        // Show inline form for adding maintenance
+        if (state is ShowingAddForm && state.tabType == ArmoryTabType.maintenence) {
+          return InlineFormWrapper(
+            title: 'Log Maintenance',
+            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            child: AddMaintenanceForm(userId: widget.userId),
+          );
+        }
+
+        // Show normal list view
         return ArmoryCard(
           title: 'Tools & Maintenance',
           description: 'Cleaning kits, torque tools, chronographs — plus per-asset maintenance logs.',
-          onAddPressed: () => _showAddToolDialog(context),
+          onAddPressed: () => context.read<ArmoryBloc>().add(
+            const ShowAddFormEvent(tabType: ArmoryTabType.tools),
+          ),
           itemCount: _tools.length + _maintenance.length,
           isLoading: state is ArmoryLoadingAction,
           child: _buildToolsAndMaintenanceContent(state),
@@ -96,7 +116,9 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
               children: [
                 CommonWidgets.buildActionButton(
                   label: 'Log Maintenance',
-                  onPressed: () => _showAddMaintenanceDialog(context),
+                  onPressed: () => context.read<ArmoryBloc>().add(
+                    const ShowAddFormEvent(tabType: ArmoryTabType.maintenence),
+                  ),
                   icon: Icons.build_circle_outlined,
                 ),
               ],
@@ -112,34 +134,29 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
 
     return Column(
       children: [
-        // Add Maintenance button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           child: Row(
             children: [
               CommonWidgets.buildActionButton(
                 label: 'Log Maintenance',
-                onPressed: () => _showAddMaintenanceDialog(context),
+                onPressed: () => context.read<ArmoryBloc>().add(
+                  const ShowAddFormEvent(tabType: ArmoryTabType.maintenence),
+                ),
                 icon: Icons.build_circle_outlined,
               ),
             ],
           ),
         ),
-        // Tools Section
         _buildToolsSection(),
-        // Maintenance Section
         _buildMaintenanceSection(),
       ],
     );
   }
 
   Widget _buildToolsSection() {
-    // Tools cards list
     final toolCards = _tools
-        .map((tool) => ToolItemCard(
-      tool: tool,
-      userId: widget.userId,
-    ))
+        .map((tool) => ToolItemCard(tool: tool, userId: widget.userId))
         .toList();
 
     return CommonWidgets.buildExpandableSection(
@@ -153,7 +170,6 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
   }
 
   Widget _buildMaintenanceSection() {
-    // Maintenance cards list
     final maintenanceCards = _maintenance
         .map((maintenance) => MaintenanceItemCard(
       maintenance: maintenance,
@@ -169,34 +185,5 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
         ResponsiveGridWidget(children: maintenanceCards),
       ],
     );
-  }
-
-  void _showAddToolDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<ArmoryBloc>(),
-        child: AddToolDialog(userId: widget.userId),
-      ),
-    ).then((_) {
-      // This runs after the dialog is closed
-      context.read<ArmoryBloc>().add(LoadToolsEvent(userId: widget.userId));
-      context.read<ArmoryBloc>().add(LoadMaintenanceEvent(userId: widget.userId));
-
-    });
-  }
-
-  void _showAddMaintenanceDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<ArmoryBloc>(),
-        child: AddMaintenanceDialog(userId: widget.userId),
-      ),
-    ).then((_) {
-      // This runs after the dialog is closed
-      context.read<ArmoryBloc>().add(LoadToolsEvent(userId: widget.userId));
-      context.read<ArmoryBloc>().add(LoadMaintenanceEvent(userId: widget.userId));
-    });
   }
 }

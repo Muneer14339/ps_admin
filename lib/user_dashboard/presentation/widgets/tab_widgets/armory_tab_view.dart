@@ -1,17 +1,18 @@
 // lib/user_dashboard/presentation/widgets/armory_tab_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../core/theme/app_theme.dart';
+
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../core/theme/app_theme.dart';
+import '../report_tab_widget.dart';
 import 'ammunition_tab_widget.dart';
 import 'firearms_tab_widget.dart';
 import 'gear_tab_widget.dart';
 import 'loadouts_tab_widget.dart';
-import 'report_tab_widget.dart';
 import 'tools_tab_widget.dart';
 
-enum ArmoryTabType { firearms, ammunition, gear, tools, loadouts, report }
+enum ArmoryTabType { firearms, ammunition, gear, tools, loadouts, report, maintenence }
 
 class ArmoryTabView extends StatefulWidget {
   final String userId;
@@ -61,6 +62,9 @@ class _ArmoryTabViewState extends State<ArmoryTabView> {
         bloc.add(LoadMaintenanceEvent(userId: widget.userId));
         bloc.add(LoadLoadoutsEvent(userId: widget.userId));
         break;
+      case ArmoryTabType.maintenence:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 
@@ -97,6 +101,9 @@ class _ArmoryTabViewState extends State<ArmoryTabView> {
         return LoadoutsTabWidget(userId: widget.userId);
       case ArmoryTabType.report:
         return ReportTabWidget(userId: widget.userId);
+      case ArmoryTabType.maintenence:
+        // TODO: Handle this case.
+        throw UnimplementedError();
     }
   }
 }

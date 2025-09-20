@@ -1,17 +1,20 @@
 // lib/user_dashboard/presentation/widgets/gear_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/armory_gear.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'add_gear_dialog.dart';
-import 'armory_card.dart';
-import 'common/common_widgets.dart';
-import 'common/responsive_grid_widget.dart';
-import 'empty_state_widget.dart';
-import 'gear_item_card.dart';
+import '../../../domain/entities/armory_gear.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../add_dialogs/add_gear_dialog.dart';
+import '../add_forms/add_gear_form.dart';
+import '../armory_card.dart';
+import '../common/common_widgets.dart';
+import '../common/inline_form_wrapper.dart';
+import '../common/responsive_grid_widget.dart';
+import '../empty_state_widget.dart';
+import '../gear_item_card.dart';
+import 'armory_tab_view.dart';
 
 class GearTabWidget extends StatelessWidget {
   final String userId;
@@ -23,6 +26,7 @@ class GearTabWidget extends StatelessWidget {
     return BlocConsumer<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
         if (state is ArmoryActionSuccess) {
+          context.read<ArmoryBloc>().add(const HideFormEvent());
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -39,12 +43,24 @@ class GearTabWidget extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        // Show inline form if in ShowingAddForm state
+        if (state is ShowingAddForm && state.tabType == ArmoryTabType.gear) {
+          return InlineFormWrapper(
+            title: 'Add Gear',
+            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            child: AddGearForm(userId: userId),
+          );
+        }
+
+        // Show normal list view
         return Column(
           children: [
             ArmoryCard(
               title: 'Gear',
               description: 'Optics, supports, sensors, attachments, and more — organized as collapsible sections.',
-              onAddPressed: () => _showAddGearDialog(context),
+              onAddPressed: () => context.read<ArmoryBloc>().add(
+                const ShowAddFormEvent(tabType: ArmoryTabType.gear),
+              ),
               itemCount: state is GearLoaded ? state.gear.length : null,
               isLoading: state is ArmoryLoadingAction,
               child: _buildGearAccordion(state),
@@ -63,7 +79,6 @@ class GearTabWidget extends StatelessWidget {
     if (state is GearLoaded) {
       final gearByCategory = <String, List<ArmoryGear>>{};
 
-      // Group gear by category
       for (final gear in state.gear) {
         final category = gear.category.toLowerCase();
         gearByCategory[category] = (gearByCategory[category] ?? [])..add(gear);
@@ -98,15 +113,10 @@ class GearTabWidget extends StatelessWidget {
   }
 
   Widget _buildGearSection(String categoryKey, String title, String subtitle, List<ArmoryGear> items) {
-    // Gear cards list
     final gearCards = items
-        .map((gear) => GearItemCard(
-      gear: gear,
-      userId: userId,
-    ))
+        .map((gear) => GearItemCard(gear: gear, userId: userId))
         .toList();
 
-// Wrap inside ResponsiveGridWidget
     return CommonWidgets.buildExpandableSection(
       title: title,
       subtitle: subtitle,
@@ -114,19 +124,5 @@ class GearTabWidget extends StatelessWidget {
         ResponsiveGridWidget(children: gearCards),
       ],
     );
-
-  }
-
-  void _showAddGearDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<ArmoryBloc>(),
-        child: AddGearDialog(userId: userId),
-      ),
-    ).then((_) {
-      // This runs after the dialog is closed
-      context.read<ArmoryBloc>().add(LoadGearEvent(userId: userId));
-    });
   }
 }

@@ -8,6 +8,7 @@ import '../../domain/entities/armory_maintenance.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/usecases/get_dropdown_options_usecase.dart';
+import '../widgets/tab_widgets/armory_tab_view.dart';
 
 abstract class ArmoryEvent extends Equatable {
   const ArmoryEvent();
@@ -176,4 +177,16 @@ class DeleteLoadoutEvent extends ArmoryEvent {
   const DeleteLoadoutEvent({required this.userId, required this.loadout});
   @override
   List<Object> get props => [userId, loadout];
+}
+
+
+class ShowAddFormEvent extends ArmoryEvent {
+  final ArmoryTabType tabType;
+  const ShowAddFormEvent({required this.tabType});
+  @override
+  List<Object> get props => [tabType];
+}
+
+class HideFormEvent extends ArmoryEvent {
+  const HideFormEvent();
 }

@@ -1,27 +1,29 @@
-// lib/user_dashboard/presentation/widgets/add_loadout_dialog.dart
+// lib/user_dashboard/presentation/widgets/add_ammunition_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/armory_gear.dart';
-import '../../domain/entities/armory_loadout.dart';
-import '../../domain/entities/dropdown_option.dart';
-import '../../domain/entities/armory_firearm.dart';
-import '../../domain/entities/armory_ammunition.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'common/dialog_widgets.dart';
 
-class AddLoadoutDialog extends StatefulWidget {
+
+import '../../../domain/entities/armory_ammunition.dart';
+import '../../../domain/entities/armory_firearm.dart';
+import '../../../domain/entities/armory_gear.dart';
+import '../../../domain/entities/armory_loadout.dart';
+import '../../../domain/entities/dropdown_option.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../common/dialog_widgets.dart';
+
+class AddLoadoutForm extends StatefulWidget {
   final String userId;
 
-  const AddLoadoutDialog({super.key, required this.userId});
+  const AddLoadoutForm({super.key, required this.userId});
 
   @override
-  State<AddLoadoutDialog> createState() => _AddLoadoutDialogState();
+  State<AddLoadoutForm> createState() => _AddLoadoutFormState();
 }
 
-class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
+class _AddLoadoutFormState extends State<AddLoadoutForm> {
   final _formKey = GlobalKey<FormState>();
   final _controllers = <String, TextEditingController>{};
   String? _selectedFirearmId;
@@ -110,27 +112,48 @@ class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
           Navigator.of(context).pop();
         }
       },
-      child: CommonDialogWidgets.buildDialogWrapper(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CommonDialogWidgets.buildHeader(
-              title: 'Create Loadout',
-              onClose: () => Navigator.of(context).pop(),
-            ),
-            Flexible(child: _buildForm()),
-            BlocBuilder<ArmoryBloc, ArmoryState>(
-              builder: (context, state) {
-                return CommonDialogWidgets.buildActions(
-                  onCancel: () => Navigator.of(context).pop(),
-                  onSave: _saveLoadout,
-                  saveButtonText: 'Save Loadout',
-                  isLoading: state is ArmoryLoadingAction,
-                );
-              },
-            ),
-          ],
-        ),
+      child:  Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: _buildForm()),
+          BlocBuilder<ArmoryBloc, ArmoryState>(
+            builder: (context, state) {
+              return _buildActions(state);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(ArmoryState state) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.dialogPadding),
+      decoration: AppDecorations.footerBorderDecoration,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            style: AppButtonStyles.cancelButtonStyle,
+            child: const Text('Cancel'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: state is ArmoryLoadingAction ? null : _saveLoadout,
+            style: AppButtonStyles.primaryButtonStyle,
+            child: state is ArmoryLoadingAction
+                ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.buttonText,
+              ),
+            )
+                : const Text('Save Loadout'),
+          ),
+        ],
       ),
     );
   }

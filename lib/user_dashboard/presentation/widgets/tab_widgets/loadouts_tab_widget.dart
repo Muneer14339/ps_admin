@@ -2,16 +2,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pa_sreens/user_dashboard/presentation/bloc/armory_event.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'add_loadout_dialog.dart';
-import 'armory_card.dart';
-import 'common/common_widgets.dart';
-import 'common/responsive_grid_widget.dart';
-import 'empty_state_widget.dart';
-import 'loadout_item_card.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../add_dialogs/add_loadout_dialog.dart';
+import '../add_forms/add_loadout_form.dart';
+import '../armory_card.dart';
+import '../common/common_widgets.dart';
+import '../common/inline_form_wrapper.dart';
+import '../common/responsive_grid_widget.dart';
+import '../empty_state_widget.dart';
+import '../loadout_item_card.dart';
+import 'armory_tab_view.dart';
 
+// Step 10: Updated LoadoutsTabWidget
 class LoadoutsTabWidget extends StatelessWidget {
   final String userId;
 
@@ -22,6 +26,7 @@ class LoadoutsTabWidget extends StatelessWidget {
     return BlocConsumer<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
         if (state is ArmoryActionSuccess) {
+          context.read<ArmoryBloc>().add(const HideFormEvent());
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -38,10 +43,22 @@ class LoadoutsTabWidget extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        // Show inline form
+        if (state is ShowingAddForm && state.tabType == ArmoryTabType.loadouts) {
+          return InlineFormWrapper(
+            title: 'Create Loadout',
+            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            child: AddLoadoutForm(userId: userId),
+          );
+        }
+
+        // Show normal list view
         return ArmoryCard(
           title: 'Loadouts',
           description: 'Create named bundles of your gear to speed up Training setup.',
-          onAddPressed: () => _showAddLoadoutDialog(context),
+          onAddPressed: () => context.read<ArmoryBloc>().add(
+            const ShowAddFormEvent(tabType: ArmoryTabType.loadouts),
+          ),
           itemCount: state is LoadoutsLoaded ? state.loadouts.length : null,
           isLoading: state is ArmoryLoadingAction,
           child: _buildLoadoutsList(state),
@@ -63,17 +80,11 @@ class LoadoutsTabWidget extends StatelessWidget {
         );
       }
 
-      // Loadout cards list
       final loadoutCards = state.loadouts
-          .map((loadout) => LoadoutItemCard(
-        loadout: loadout,
-        userId: userId,
-      ))
+          .map((loadout) => LoadoutItemCard(loadout: loadout, userId: userId))
           .toList();
 
-// ResponsiveGridWidget ka use
       return ResponsiveGridWidget(children: loadoutCards);
-
     }
 
     if (state is ArmoryError) {
@@ -84,18 +95,5 @@ class LoadoutsTabWidget extends StatelessWidget {
       message: 'No loadouts yet.',
       icon: Icons.add_circle_outline,
     );
-  }
-
-  void _showAddLoadoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<ArmoryBloc>(),
-        child: AddLoadoutDialog(userId: userId),
-      ),
-    ).then((_) {
-      // This runs after the dialog is closed
-      context.read<ArmoryBloc>().add(LoadLoadoutsEvent(userId: userId));
-    });
   }
 }

@@ -1,26 +1,28 @@
-// lib/user_dashboard/presentation/widgets/add_maintenance_dialog.dart
+// lib/user_dashboard/presentation/widgets/add_ammunition_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../domain/entities/armory_maintenance.dart';
-import '../../domain/entities/armory_firearm.dart';
-import '../../domain/entities/armory_gear.dart';
-import '../../domain/entities/dropdown_option.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'common/dialog_widgets.dart';
 
-class AddMaintenanceDialog extends StatefulWidget {
+
+import '../../../domain/entities/armory_firearm.dart';
+import '../../../domain/entities/armory_gear.dart';
+import '../../../domain/entities/armory_maintenance.dart';
+import '../../../domain/entities/dropdown_option.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../common/dialog_widgets.dart';
+
+class AddMaintenanceForm extends StatefulWidget {
   final String userId;
 
-  const AddMaintenanceDialog({super.key, required this.userId});
+  const AddMaintenanceForm({super.key, required this.userId});
 
   @override
-  State<AddMaintenanceDialog> createState() => _AddMaintenanceDialogState();
+  State<AddMaintenanceForm> createState() => _AddMaintenanceFormState();
 }
 
-class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
+class _AddMaintenanceFormState extends State<AddMaintenanceForm> {
   final _formKey = GlobalKey<FormState>();
   final _controllers = <String, TextEditingController>{};
   final _dropdownValues = <String, String?>{};
@@ -108,27 +110,48 @@ class _AddMaintenanceDialogState extends State<AddMaintenanceDialog> {
           Navigator.of(context).pop();
         }
       },
-      child: CommonDialogWidgets.buildDialogWrapper(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CommonDialogWidgets.buildHeader(
-              title: 'Log Maintenance',
-              onClose: () => Navigator.of(context).pop(),
-            ),
-            Flexible(child: _buildForm()),
-            BlocBuilder<ArmoryBloc, ArmoryState>(
-              builder: (context, state) {
-                return CommonDialogWidgets.buildActions(
-                  onCancel: () => Navigator.of(context).pop(),
-                  onSave: _saveMaintenance,
-                  saveButtonText: 'Save Log',
-                  isLoading: state is ArmoryLoadingAction,
-                );
-              },
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: _buildForm()),
+          BlocBuilder<ArmoryBloc, ArmoryState>(
+            builder: (context, state) {
+              return _buildActions(state);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(ArmoryState state) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.dialogPadding),
+      decoration: AppDecorations.footerBorderDecoration,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            style: AppButtonStyles.cancelButtonStyle,
+            child: const Text('Cancel'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: state is ArmoryLoadingAction ? null : _saveMaintenance,
+            style: AppButtonStyles.primaryButtonStyle,
+            child: state is ArmoryLoadingAction
+                ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.buttonText,
+              ),
+            )
+                : const Text('Save Maintenance'),
+          ),
+        ],
       ),
     );
   }

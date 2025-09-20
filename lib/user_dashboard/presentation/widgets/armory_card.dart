@@ -24,49 +24,45 @@ class ArmoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: AppSizes.cardMargin,
-      decoration: AppDecorations.mainCardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: AppSizes.cardPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(title, style: AppTextStyles.cardTitle),
-                    const SizedBox(width: AppSizes.itemSpacing),
-                    const Icon(
-                      Icons.inventory_2_outlined,
-                      color: AppColors.accentText,
-                      size: AppSizes.smallIcon,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(description, style: AppTextStyles.cardDescription),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    CommonWidgets.buildActionButton(
-                      label: 'Add $title',
-                      onPressed: onAddPressed,
-                      isLoading: isLoading,
-                    ),
-                    const Spacer(),
-                    if (itemCount != null)
-                      CommonWidgets.buildCountBadge(itemCount!, 'items'),
-                  ],
-                ),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: AppSizes.cardPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(title, style: AppTextStyles.cardTitle),
+                  const SizedBox(width: AppSizes.itemSpacing),
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    color: AppColors.accentText,
+                    size: AppSizes.smallIcon,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(description, style: AppTextStyles.cardDescription),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  CommonWidgets.buildActionButton(
+                    label: 'Add $title',
+                    onPressed: onAddPressed,
+                    isLoading: isLoading,
+                  ),
+                  const Spacer(),
+                  if (itemCount != null)
+                    CommonWidgets.buildCountBadge(itemCount!, 'items'),
+                ],
+              ),
+            ],
           ),
-          child,
-        ],
-      ),
+        ),
+        child,
+      ],
     );
   }
 }

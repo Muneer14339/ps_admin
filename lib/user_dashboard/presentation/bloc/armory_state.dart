@@ -7,6 +7,7 @@ import '../../domain/entities/armory_maintenance.dart';
 import '../../domain/entities/armory_tool.dart';
 import '../../domain/entities/armory_loadout.dart';
 import '../../domain/entities/dropdown_option.dart';
+import '../widgets/tab_widgets/armory_tab_view.dart';
 
 abstract class ArmoryState extends Equatable {
   const ArmoryState();
@@ -110,4 +111,12 @@ class MaintenanceLoaded extends ArmoryState {
   const MaintenanceLoaded({required this.maintenance});
   @override
   List<Object> get props => [maintenance];
+}
+
+
+class ShowingAddForm extends ArmoryState {
+  final ArmoryTabType tabType;
+  const ShowingAddForm({required this.tabType});
+  @override
+  List<Object> get props => [tabType];
 }

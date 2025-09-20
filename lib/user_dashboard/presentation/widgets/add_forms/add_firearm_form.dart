@@ -1,26 +1,26 @@
 // lib/user_dashboard/presentation/widgets/add_firearm_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/usecases/usecase.dart';
-import '../../domain/entities/armory_firearm.dart';
-import '../../domain/entities/dropdown_option.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'common/dialog_widgets.dart';
-import 'common/enhanced_dialog_widgets.dart';
+import '../../../../core/usecases/usecase.dart';
+import '../../../domain/entities/armory_firearm.dart';
+import '../../../domain/entities/dropdown_option.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../common/dialog_widgets.dart';
+import '../common/enhanced_dialog_widgets.dart';
 
-class AddFirearmDialog extends StatefulWidget {
+class AddFirearmForm extends StatefulWidget {
   final String userId;
 
-  const AddFirearmDialog({super.key, required this.userId});
+  const AddFirearmForm({super.key, required this.userId});
 
   @override
-  State<AddFirearmDialog> createState() => _AddFirearmDialogState();
+  State<AddFirearmForm> createState() => _AddFirearmFormState();
 }
 
-class _AddFirearmDialogState extends State<AddFirearmDialog> {
+class _AddFirearmFormState extends State<AddFirearmForm> {
   final _formKey = GlobalKey<FormState>();
   final _controllers = <String, TextEditingController>{};
   final _dropdownValues = <String, String?>{};
@@ -299,28 +299,48 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
           Navigator.of(context).pop();
         }
       },
-      child: CommonDialogWidgets.buildDialogWrapper(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CommonDialogWidgets.buildHeader(
-              title: 'Add Firearm',
-              badge: 'Level 1 UI',
-              onClose: () => Navigator.of(context).pop(),
-            ),
-            Flexible(child: _buildForm()),
-            BlocBuilder<ArmoryBloc, ArmoryState>(
-              builder: (context, state) {
-                return CommonDialogWidgets.buildActions(
-                  onCancel: () => Navigator.of(context).pop(),
-                  onSave: _saveFirearm,
-                  saveButtonText: 'Save Firearm',
-                  isLoading: state is ArmoryLoadingAction,
-                );
-              },
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: _buildForm()),
+          BlocBuilder<ArmoryBloc, ArmoryState>(
+            builder: (context, state) {
+              return _buildActions(state);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(ArmoryState state) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.dialogPadding),
+      decoration: AppDecorations.footerBorderDecoration,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            style: AppButtonStyles.cancelButtonStyle,
+            child: const Text('Cancel'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: state is ArmoryLoadingAction ? null : _saveFirearm,
+            style: AppButtonStyles.primaryButtonStyle,
+            child: state is ArmoryLoadingAction
+                ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.buttonText,
+              ),
+            )
+                : const Text('Save Firearm'),
+          ),
+        ],
       ),
     );
   }

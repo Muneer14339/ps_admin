@@ -1,0 +1,271 @@
+// // lib/user_dashboard/presentation/widgets/add_loadout_dialog.dart
+// import 'package:flutter/material.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import '../../../domain/entities/armory_gear.dart';
+// import '../../../domain/entities/armory_loadout.dart';
+// import '../../../domain/entities/dropdown_option.dart';
+// import '../../../domain/entities/armory_firearm.dart';
+// import '../../../domain/entities/armory_ammunition.dart';
+// import '../../bloc/armory_bloc.dart';
+// import '../../bloc/armory_event.dart';
+// import '../../bloc/armory_state.dart';
+// import '../../core/theme/app_theme.dart';
+// import '../common/dialog_widgets.dart';
+//
+// class AddLoadoutDialog extends StatefulWidget {
+//   final String userId;
+//
+//   const AddLoadoutDialog({super.key, required this.userId});
+//
+//   @override
+//   State<AddLoadoutDialog> createState() => _AddLoadoutDialogState();
+// }
+//
+// class _AddLoadoutDialogState extends State<AddLoadoutDialog> {
+//   final _formKey = GlobalKey<FormState>();
+//   final _controllers = <String, TextEditingController>{};
+//   String? _selectedFirearmId;
+//   String? _selectedAmmunitionId;
+//
+//   List<DropdownOption> _firearmOptions = [];
+//   List<DropdownOption> _ammunitionOptions = [];
+//   bool _loadingFirearms = true;
+//   bool _loadingAmmunition = true;
+//
+//   List<DropdownOption> _gearOptions = [];
+//   List<String> _selectedGearIds = [];
+//   bool _loadingGear = true;
+//
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initializeControllers();
+//     _loadData();
+//   }
+//
+//   void _initializeControllers() {
+//     final fields = ['name', 'notes'];
+//     for (final field in fields) {
+//       _controllers[field] = TextEditingController();
+//     }
+//   }
+//
+//   void _loadData() {
+//     // Load user's firearms and ammunition
+//     context.read<ArmoryBloc>().add(LoadFirearmsEvent(userId: widget.userId));
+//     context.read<ArmoryBloc>().add(LoadAmmunitionEvent(userId: widget.userId));
+//     context.read<ArmoryBloc>().add(LoadGearEvent(userId: widget.userId));
+//
+//   }
+//
+//   void _handleFirearmsLoaded(List<ArmoryFirearm> firearms) {
+//     setState(() {
+//       _firearmOptions = firearms.map((firearm) => DropdownOption(
+//         value: firearm.id!,
+//         label: '${firearm.nickname} (${firearm.make} ${firearm.model})',
+//       )).toList();
+//       _loadingFirearms = false;
+//     });
+//   }
+//
+//   void _handleAmmunitionLoaded(List<ArmoryAmmunition> ammunition) {
+//     setState(() {
+//       _ammunitionOptions = ammunition.map((ammo) => DropdownOption(
+//         value: ammo.id!,
+//         label: '${ammo.brand} ${ammo.caliber} ${ammo.bullet} (${ammo.quantity} rds)',
+//       )).toList();
+//       _loadingAmmunition = false;
+//     });
+//   }
+//
+//   void _handleGearLoaded(List<ArmoryGear> gear) {
+//     setState(() {
+//       _gearOptions = gear
+//           .map((g) => DropdownOption(value: g.id!, label: g.model))
+//           .toList();
+//       _loadingGear = false;
+//     });
+//   }
+//
+//
+//   @override
+//   void dispose() {
+//     _controllers.values.forEach((controller) => controller.dispose());
+//     super.dispose();
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return BlocListener<ArmoryBloc, ArmoryState>(
+//       listener: (context, state) {
+//         if (state is FirearmsLoaded) {
+//           _handleFirearmsLoaded(state.firearms);
+//         } else if (state is AmmunitionLoaded) {
+//           _handleAmmunitionLoaded(state.ammunition);
+//         } else if (state is GearLoaded) {
+//           _handleGearLoaded(state.gear);
+//         }
+//         else if (state is ArmoryActionSuccess) {
+//           Navigator.of(context).pop();
+//         }
+//       },
+//       child: CommonDialogWidgets.buildDialogWrapper(
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             CommonDialogWidgets.buildHeader(
+//               title: 'Create Loadout',
+//               onClose: () => Navigator.of(context).pop(),
+//             ),
+//             Flexible(child: _buildForm()),
+//             BlocBuilder<ArmoryBloc, ArmoryState>(
+//               builder: (context, state) {
+//                 return CommonDialogWidgets.buildActions(
+//                   onCancel: () => Navigator.of(context).pop(),
+//                   onSave: _saveLoadout,
+//                   saveButtonText: 'Save Loadout',
+//                   isLoading: state is ArmoryLoadingAction,
+//                 );
+//               },
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _buildForm() {
+//     return SingleChildScrollView(
+//       padding: const EdgeInsets.all(AppSizes.dialogPadding),
+//       child: Form(
+//         key: _formKey,
+//         child: Column(
+//           children: [
+//             // Loadout Name
+//             CommonDialogWidgets.buildTextField(
+//               label: 'Loadout Name *',
+//               controller: _controllers['name']!,
+//               isRequired: true,
+//               maxLength: 25, // Add this
+//               hintText: 'e.g., Precision .308, Competition Setup',
+//             ),
+//             const SizedBox(height: AppSizes.fieldSpacing),
+//
+//             // Firearm Selection
+//             CommonDialogWidgets.buildDropdownField(
+//               label: 'Firearm',
+//               value: _selectedFirearmId,
+//               options: _firearmOptions,
+//               onChanged: (value) => setState(() => _selectedFirearmId = value),
+//               isLoading: _loadingFirearms,
+//               enabled: !_loadingFirearms,
+//             ),
+//             const SizedBox(height: AppSizes.fieldSpacing),
+//
+//             // Ammunition Selection
+//             CommonDialogWidgets.buildDropdownField(
+//               label: 'Ammunition',
+//               value: _selectedAmmunitionId,
+//               options: _ammunitionOptions,
+//               onChanged: (value) => setState(() => _selectedAmmunitionId = value),
+//               isLoading: _loadingAmmunition,
+//               enabled: !_loadingAmmunition,
+//             ),
+//             const SizedBox(height: AppSizes.fieldSpacing),
+//
+//             // Gear Multi-Select
+//             CommonDialogWidgets.buildDropdownField(
+//               label: 'Gear',
+//               value: null, // we don't bind one value because it's multi-select
+//               options: _gearOptions,
+//               isLoading: _loadingGear,
+//               enabled: !_loadingGear,
+//               onChanged: (value) {
+//                 if (value != null && !_selectedGearIds.contains(value)) {
+//                   setState(() => _selectedGearIds.add(value));
+//                 }
+//               },
+//             ),
+//
+// // Show selected gear as chips
+//             // Show selected gear as chips
+//             if (_selectedGearIds.isNotEmpty) ...[
+//               const SizedBox(height: 8),
+//               Align(
+//                 alignment: Alignment.centerLeft,
+//                 child: Wrap(
+//                   spacing: 8,
+//                   runSpacing: 8,
+//                   children: _selectedGearIds.map((id) {
+//                     final label = _gearOptions.firstWhere((g) => g.value == id).label;
+//                     return Chip(
+//                       label: Text(
+//                         label,
+//                         style: AppTextStyles.fieldLabel.copyWith(
+//                           fontSize: 13,
+//                           color: AppColors.primaryText,
+//                         ),
+//                       ),
+//                       backgroundColor: AppColors.cardBackground.withOpacity(0.9),
+//                       shape: RoundedRectangleBorder(
+//                         borderRadius: BorderRadius.circular(AppSizes.cardBorderRadius),
+//                         side: BorderSide(color: AppColors.primaryBackground),
+//                       ),
+//                       deleteIcon: const Icon(Icons.close, size: 18, color: AppColors.secondaryText),
+//                       onDeleted: () {
+//                         setState(() => _selectedGearIds.remove(id));
+//                       },
+//                     );
+//                   }).toList(),
+//                 ),
+//               ),
+//             ],
+//
+//
+//             const SizedBox(height: AppSizes.fieldSpacing),
+//
+//
+//             // Notes
+//             CommonDialogWidgets.buildTextField(
+//               label: 'Notes',
+//               controller: _controllers['notes']!,
+//               maxLines: 3,
+//               maxLength: 200, // Add this
+//               hintText: 'Purpose, conditions, special setup notes, etc.',
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   void _saveLoadout() {
+//     if (!_formKey.currentState!.validate()) return;
+//
+//     final name = _controllers['name']?.text.trim() ?? '';
+//     if (name.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(
+//           content: Text('Loadout name is required'),
+//           backgroundColor: AppColors.errorColor,
+//         ),
+//       );
+//       return;
+//     }
+//
+//     final loadout = ArmoryLoadout(
+//       name: name,
+//       firearmId: _selectedFirearmId,
+//       ammunitionId: _selectedAmmunitionId,
+//       gearIds: _selectedGearIds,
+//       notes: _controllers['notes']?.text.trim(),
+//       dateAdded: DateTime.now(),
+//     );
+//
+//
+//     context.read<ArmoryBloc>().add(
+//       AddLoadoutEvent(userId: widget.userId, loadout: loadout),
+//     );
+//   }
+// }

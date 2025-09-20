@@ -9,8 +9,8 @@ import '../../../authentication/presentation/bloc/login_bloc/auth_state.dart';
 import '../../../authentication/presentation/pages/login_page.dart';
 import '../bloc/armory_bloc.dart';
 import '../core/theme/app_theme.dart';
-import '../widgets/armory_tab_view.dart';
 import '../widgets/common/common_widgets.dart';
+import '../widgets/tab_widgets/armory_tab_view.dart';
 
 class UserDashboardPage extends StatelessWidget {
   const UserDashboardPage({super.key});

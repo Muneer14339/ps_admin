@@ -1,16 +1,19 @@
 // lib/user_dashboard/presentation/widgets/ammunition_tab_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/armory_bloc.dart';
-import '../bloc/armory_event.dart';
-import '../bloc/armory_state.dart';
-import '../core/theme/app_theme.dart';
-import 'add_ammunition_dialog.dart';
-import 'ammunition_item_card.dart';
-import 'armory_card.dart';
-import 'common/common_widgets.dart';
-import 'common/responsive_grid_widget.dart';
-import 'empty_state_widget.dart';
+import '../../bloc/armory_bloc.dart';
+import '../../bloc/armory_event.dart';
+import '../../bloc/armory_state.dart';
+import '../../core/theme/app_theme.dart';
+import '../add_dialogs/add_ammunition_dialog.dart';
+import '../add_forms/add_ammunition_form.dart';
+import '../ammunition_item_card.dart';
+import '../armory_card.dart';
+import '../common/common_widgets.dart';
+import '../common/inline_form_wrapper.dart';
+import '../common/responsive_grid_widget.dart';
+import '../empty_state_widget.dart';
+import 'armory_tab_view.dart';
 
 class AmmunitionTabWidget extends StatelessWidget {
   final String userId;
@@ -22,6 +25,7 @@ class AmmunitionTabWidget extends StatelessWidget {
     return BlocConsumer<ArmoryBloc, ArmoryState>(
       listener: (context, state) {
         if (state is ArmoryActionSuccess) {
+          context.read<ArmoryBloc>().add(const HideFormEvent());
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -38,10 +42,23 @@ class AmmunitionTabWidget extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        // Show inline form
+        if (state is ShowingAddForm && state.tabType == ArmoryTabType.ammunition) {
+          return InlineFormWrapper(
+            title: 'Add Ammunition',
+            badge: 'Level 1 UI',
+            onCancel: () => context.read<ArmoryBloc>().add(const HideFormEvent()),
+            child: AddAmmunitionForm(userId: userId),
+          );
+        }
+
+        // Show normal list view
         return ArmoryCard(
           title: 'Ammunition',
           description: 'Catalog brands and track lots with chrono data for better analytics.',
-          onAddPressed: () => _showAddAmmunitionDialog(context),
+          onAddPressed: () => context.read<ArmoryBloc>().add(
+            const ShowAddFormEvent(tabType: ArmoryTabType.ammunition),
+          ),
           itemCount: state is AmmunitionLoaded ? state.ammunition.length : null,
           isLoading: state is ArmoryLoadingAction,
           child: _buildAmmunitionList(state),
@@ -63,17 +80,11 @@ class AmmunitionTabWidget extends StatelessWidget {
         );
       }
 
-      // Ammunition cards list bana lo
       final ammoCards = state.ammunition
-          .map((ammo) => AmmunitionItemCard(
-        ammunition: ammo,
-        userId: userId,
-      ))
+          .map((ammo) => AmmunitionItemCard(ammunition: ammo, userId: userId))
           .toList();
 
-// Yahan Column ki jagah ResponsiveGridWidget use karo
       return ResponsiveGridWidget(children: ammoCards);
-
     }
 
     if (state is ArmoryError) {
@@ -85,17 +96,5 @@ class AmmunitionTabWidget extends StatelessWidget {
       icon: Icons.add_circle_outline,
     );
   }
-
-  void _showAddAmmunitionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<ArmoryBloc>(),
-        child: AddAmmunitionDialog(userId: userId),
-      ),
-    ).then((_) {
-      // This runs after the dialog is closed
-      context.read<ArmoryBloc>().add(LoadAmmunitionEvent(userId: userId));
-    });
-  }
 }
+

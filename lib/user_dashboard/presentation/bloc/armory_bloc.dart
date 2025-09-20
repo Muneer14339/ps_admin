@@ -89,6 +89,9 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
     on<DeleteToolEvent>(_onDeleteTool);
     on<DeleteMaintenanceEvent>(_onDeleteMaintenance);
     on<DeleteLoadoutEvent>(_onDeleteLoadout);
+
+    on<ShowAddFormEvent>(_onShowAddForm);
+    on<HideFormEvent>(_onHideForm);
   }
 
   void _onLoadFirearms(LoadFirearmsEvent event, Emitter<ArmoryState> emit) async {
@@ -352,4 +355,12 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
       },
     );
   }
+}
+
+void _onShowAddForm(ShowAddFormEvent event, Emitter<ArmoryState> emit) {
+  emit(ShowingAddForm(tabType: event.tabType));
+}
+
+void _onHideForm(HideFormEvent event, Emitter<ArmoryState> emit) {
+  emit(const ArmoryInitial());
 }
