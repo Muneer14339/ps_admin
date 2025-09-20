@@ -3,12 +3,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // Authentication imports
 import 'authentication/data/datasources/auth_remote_datasource.dart';
 import 'authentication/data/repositories/auth_repository_impl.dart';
 import 'authentication/domain/repositories/auth_repository.dart';
 import 'authentication/domain/usecases/get_current_user_usecase.dart';
+import 'authentication/domain/usecases/google_signin_usecase.dart';
 import 'authentication/domain/usecases/login_usecase.dart';
 import 'authentication/domain/usecases/logout_usecase.dart';
 import 'authentication/domain/usecases/signup_usecase.dart';
@@ -58,13 +60,13 @@ Future<void> init() async {
         () => AuthBloc(
       loginUseCase: sl(),
       logoutUseCase: sl(),
-      getCurrentUserUseCase: sl(),
+      getCurrentUserUseCase: sl(), googleSignInUseCase: sl(),
     ),
   );
 
   sl.registerFactory(
         () => SignupBloc(
-      signupUseCase: sl(),
+      signupUseCase: sl(), googleSignInUseCase: sl(),
     ),
   );
 
@@ -108,6 +110,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SignupUseCase(sl()));
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+  sl.registerLazySingleton(() => GoogleSignInUseCase(sl()));
 
   // Use cases - Admin Dashboard
   sl.registerLazySingleton(() => UploadFirearmUseCase(sl()));
@@ -154,11 +157,12 @@ Future<void> init() async {
         () => ArmoryRepositoryImpl(remoteDataSource: sl()),
   );
 
+  sl.registerLazySingleton(() => GoogleSignIn());
   // Data sources - Authentication
   sl.registerLazySingleton<AuthRemoteDataSource>(
         () => AuthRemoteDataSourceImpl(
       firebaseAuth: sl(),
-      firestore: sl(),
+      firestore: sl(), googleSignIn: sl(),
     ),
   );
 

@@ -38,15 +38,13 @@ class _LoginFormState extends State<LoginForm> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          final role = state.user.role ?? 0; // role null ho to default 0
+          final role = state.user.role ?? 0;
           if (role == 1) {
-            // Role = 0 → abhi jaise kaam ho raha waise hi
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const AdminHomePage()),
             );
           } else {
-            // Role ≠ 1 → HomePage open karo
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const UserDashboardPage()),
@@ -103,28 +101,74 @@ class _LoginFormState extends State<LoginForm> {
                     const SizedBox(height: 30),
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          ),
-                          onPressed: state is AuthLoading
-                              ? null
-                              : () {
-                            context.read<AuthBloc>().add(
-                              LoginRequested(
-                                email: emailController.text,
-                                password: passwordController.text,
+                        return Column(
+                          children: [
+                            // Email/Password Login Button
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                               ),
-                            );
-                          },
-                          child: state is AuthLoading
-                              ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                              : const Text('Login', style: TextStyle(fontSize: 16)),
+                              onPressed: state is AuthLoading
+                                  ? null
+                                  : () {
+                                context.read<AuthBloc>().add(
+                                  LoginRequested(
+                                    email: emailController.text,
+                                    password: passwordController.text,
+                                  ),
+                                );
+                              },
+                              child: state is AuthLoading
+                                  ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                                  : const Text('Login', style: TextStyle(fontSize: 16)),
+                            ),
+                            const SizedBox(height: 15),
+                            // Divider
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.grey[400])),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text('OR', style: TextStyle(color: Colors.grey[600])),
+                                ),
+                                Expanded(child: Divider(color: Colors.grey[400])),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            // Google Sign In Button
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                side: const BorderSide(color: Colors.grey),
+                              ),
+                              onPressed: state is AuthLoading
+                                  ? null
+                                  : () {
+                                context.read<AuthBloc>().add(const GoogleSignInRequested());
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/google_logo.png', // Add Google logo to assets
+                                    height: 20,
+                                    width: 20,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.g_mobiledata, size: 20);
+                                    },
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text('Sign in with Google', style: TextStyle(fontSize: 16)),
+                                ],
+                              ),
+                            ),
+                          ],
                         );
                       },
                     ),

@@ -57,11 +57,11 @@ class FirearmItemCard extends StatelessWidget {
             spacing: 10,
             runSpacing: AppSizes.smallSpacing,
             children: [
-              if (firearm.serial?.isNotEmpty == true)
-                Text(
-                  'SN: ${firearm.serial}',
-                  style: AppTextStyles.itemSubtitle,
-                ),
+              // if (firearm.serial?.isNotEmpty == true)
+              //   Text(
+              //     'SN: ${firearm.serial}',
+              //     style: AppTextStyles.itemSubtitle,
+              //   ),
               if (firearm.nickname.isNotEmpty)
                 Text(
                   '"${firearm.nickname}"',

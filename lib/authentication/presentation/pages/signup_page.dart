@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:country_picker/country_picker.dart';
+
 import '../../../admin_dashboard/presentation/pages/admin_home_page.dart';
 import '../../../injection_container.dart';
 import '../../../user_dashboard/presentation/pages/user_dashboard_page.dart';
@@ -32,30 +34,39 @@ class _SignupFormState extends State<SignupForm> {
   final firstNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final locationController = TextEditingController();
+
+  String? selectedCountry;
+
+  void _pickCountry() {
+    showCountryPicker(
+      context: context,
+      showPhoneCode: false,
+      onSelect: (Country country) {
+        setState(() {
+          selectedCountry = country.name;
+        });
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<SignupBloc, SignupState>(
-      listener: (context, state)  {
+      listener: (context, state) {
         if (state is SignupSuccess) {
-          final role = state.user.role ?? 0; // role null ho to default 0
+          final role = state.user.role ?? 0;
           if (role == 1) {
-            // Role = 0 → abhi jaise kaam ho raha waise hi
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const AdminHomePage()),
             );
-          } else
-          {
-            // Role ≠ 1 → HomePage open karo
+          } else {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const UserDashboardPage()),
             );
           }
-        }
-        else if (state is SignupError) {
+        } else if (state is SignupError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
@@ -113,43 +124,97 @@ class _SignupFormState extends State<SignupForm> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    TextField(
-                      controller: locationController,
-                      decoration: InputDecoration(
-                        labelText: 'Location (Optional)',
-                        prefixIcon: const Icon(Icons.location_on),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+
+                    // Country Dropdown
+                    GestureDetector(
+                      onTap: _pickCountry,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Country (Optional)',
+                          prefixIcon: const Icon(Icons.location_on),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          selectedCountry ?? 'Select your country',
+                          style: TextStyle(
+                            color: selectedCountry == null ? Colors.grey[600] : Colors.black,
+                          ),
+                        ),
                       ),
                     ),
+
                     const SizedBox(height: 30),
                     BlocBuilder<SignupBloc, SignupState>(
                       builder: (context, state) {
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          ),
-                          onPressed: state is SignupLoading
-                              ? null
-                              : () {
-                            context.read<SignupBloc>().add(
-                              SignupRequested(
-                                firstName: firstNameController.text,
-                                email: emailController.text,
-                                password: passwordController.text,
-                                location: locationController.text.isEmpty
-                                    ? null
-                                    : locationController.text,
+                        return Column(
+                          children: [
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                               ),
-                            );
-                          },
-                          child: state is SignupLoading
-                              ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                              : const Text('Sign Up', style: TextStyle(fontSize: 16)),
+                              onPressed: state is SignupLoading
+                                  ? null
+                                  : () {
+                                context.read<SignupBloc>().add(
+                                  SignupRequested(
+                                    firstName: firstNameController.text,
+                                    email: emailController.text,
+                                    password: passwordController.text,
+                                    location: selectedCountry,
+                                  ),
+                                );
+                              },
+                              child: state is SignupLoading
+                                  ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                                  : const Text('Sign Up', style: TextStyle(fontSize: 16)),
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
+                              children: [
+                                Expanded(child: Divider(color: Colors.grey[400])),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text('OR', style: TextStyle(color: Colors.grey[600])),
+                                ),
+                                Expanded(child: Divider(color: Colors.grey[400])),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                side: const BorderSide(color: Colors.grey),
+                              ),
+                              onPressed: state is SignupLoading
+                                  ? null
+                                  : () {
+                                context.read<SignupBloc>().add(const GoogleSignUpRequested());
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/google_logo.png',
+                                    height: 20,
+                                    width: 20,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.g_mobiledata, size: 20);
+                                    },
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text('Sign up with Google', style: TextStyle(fontSize: 16)),
+                                ],
+                              ),
+                            ),
+                          ],
                         );
                       },
                     ),
@@ -175,7 +240,6 @@ class _SignupFormState extends State<SignupForm> {
     firstNameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    locationController.dispose();
     super.dispose();
   }
 }

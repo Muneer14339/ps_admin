@@ -9,6 +9,7 @@ import 'add_ammunition_dialog.dart';
 import 'ammunition_item_card.dart';
 import 'armory_card.dart';
 import 'common/common_widgets.dart';
+import 'common/responsive_grid_widget.dart';
 import 'empty_state_widget.dart';
 
 class AmmunitionTabWidget extends StatelessWidget {
@@ -62,11 +63,17 @@ class AmmunitionTabWidget extends StatelessWidget {
         );
       }
 
-      return Column(
-        children: state.ammunition
-            .map((ammo) => AmmunitionItemCard(ammunition: ammo,userId: userId,))
-            .toList(),
-      );
+      // Ammunition cards list bana lo
+      final ammoCards = state.ammunition
+          .map((ammo) => AmmunitionItemCard(
+        ammunition: ammo,
+        userId: userId,
+      ))
+          .toList();
+
+// Yahan Column ki jagah ResponsiveGridWidget use karo
+      return ResponsiveGridWidget(children: ammoCards);
+
     }
 
     if (state is ArmoryError) {

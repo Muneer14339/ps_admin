@@ -9,6 +9,7 @@ import '../core/theme/app_theme.dart';
 import 'add_gear_dialog.dart';
 import 'armory_card.dart';
 import 'common/common_widgets.dart';
+import 'common/responsive_grid_widget.dart';
 import 'empty_state_widget.dart';
 import 'gear_item_card.dart';
 
@@ -97,11 +98,23 @@ class GearTabWidget extends StatelessWidget {
   }
 
   Widget _buildGearSection(String categoryKey, String title, String subtitle, List<ArmoryGear> items) {
+    // Gear cards list
+    final gearCards = items
+        .map((gear) => GearItemCard(
+      gear: gear,
+      userId: userId,
+    ))
+        .toList();
+
+// Wrap inside ResponsiveGridWidget
     return CommonWidgets.buildExpandableSection(
       title: title,
       subtitle: subtitle,
-      children: items.map((gear) => GearItemCard(gear: gear, userId: userId,)).toList(),
+      children: [
+        ResponsiveGridWidget(children: gearCards),
+      ],
     );
+
   }
 
   void _showAddGearDialog(BuildContext context) {

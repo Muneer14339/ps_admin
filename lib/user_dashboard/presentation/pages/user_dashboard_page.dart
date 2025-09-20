@@ -30,19 +30,60 @@ class UserDashboardPage extends StatelessWidget {
 class UserDashboardView extends StatefulWidget {
   const UserDashboardView({super.key});
 
-@override
-State<UserDashboardView> createState() => _UserDashboardViewState();
+  @override
+  State<UserDashboardView> createState() => _UserDashboardViewState();
 }
 
 class _UserDashboardViewState extends State<UserDashboardView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String? userId;
+  int _selectedTabIndex = 0;
+
+  final List<TabInfo> _tabs = [
+    TabInfo(
+      title: 'Firearms',
+      icon: Icons.gps_fixed,
+      tabType: ArmoryTabType.firearms,
+    ),
+    TabInfo(
+      title: 'Ammo',
+      icon: Icons.fiber_manual_record,
+      tabType: ArmoryTabType.ammunition,
+    ),
+    TabInfo(
+      title: 'Gear',
+      icon: Icons.inventory,
+      tabType: ArmoryTabType.gear,
+    ),
+    TabInfo(
+      title: 'Tools & Maint.',
+      icon: Icons.build,
+      tabType: ArmoryTabType.tools,
+    ),
+    TabInfo(
+      title: 'Loadouts',
+      icon: Icons.playlist_add_check,
+      tabType: ArmoryTabType.loadouts,
+    ),
+    TabInfo(
+      title: 'Report',
+      icon: Icons.analytics,
+      tabType: ArmoryTabType.report,
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        setState(() {
+          _selectedTabIndex = _tabController.index;
+        });
+      }
+    });
     userId = FirebaseAuth.instance.currentUser?.uid;
   }
 
@@ -63,10 +104,18 @@ class _UserDashboardViewState extends State<UserDashboardView>
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.primaryBackground,
-        appBar: _buildAppBar(),
-        body: userId == null ? _buildUnauthenticatedView() : _buildMainContent(),
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          return Scaffold(
+            backgroundColor: AppColors.primaryBackground,
+            appBar: orientation == Orientation.portrait ? _buildAppBar() : null,
+            body: userId == null
+                ? _buildUnauthenticatedView()
+                : orientation == Orientation.portrait
+                ? _buildPortraitLayout()
+                : _buildLandscapeLayout(),
+          );
+        },
       ),
     );
   }
@@ -113,14 +162,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
       indicatorColor: AppColors.accentText,
       labelStyle: AppTextStyles.tabLabel,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.itemSpacing),
-      tabs: const [
-        Tab(text: 'Firearms'),
-        Tab(text: 'Ammo'),
-        Tab(text: 'Gear'),
-        Tab(text: 'Tools & Maint.'),
-        Tab(text: 'Loadouts'),
-        Tab(text: 'Report'),
-      ],
+      tabs: _tabs.map((tab) => Tab(text: tab.title)).toList(),
     );
   }
 
@@ -130,38 +172,183 @@ class _UserDashboardViewState extends State<UserDashboardView>
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildPortraitLayout() {
     return Container(
       decoration: AppDecorations.pageDecoration,
       child: TabBarView(
         controller: _tabController,
-        children: [
-          ArmoryTabView(
-            userId: userId!,
-            tabType: ArmoryTabType.firearms,
-          ),
-          ArmoryTabView(
-            userId: userId!,
-            tabType: ArmoryTabType.ammunition,
-          ),
-          ArmoryTabView(
-            userId: userId!,
-            tabType: ArmoryTabType.gear,
-          ),
-          ArmoryTabView(
-            userId: userId!,
-            tabType: ArmoryTabType.tools,
-          ),
-          ArmoryTabView(
-            userId: userId!,
-            tabType: ArmoryTabType.loadouts,
-          ),
-          ArmoryTabView(
-            userId: userId!,
-            tabType: ArmoryTabType.report,
-          ),
-        ],
+        children: _tabs.map((tab) => ArmoryTabView(
+          userId: userId!,
+          tabType: tab.tabType,
+        )).toList(),
       ),
     );
   }
+
+  Widget _buildLandscapeLayout() {
+    return Row(
+      children: [
+        // Sidebar Navigation (20% width)
+        Container(
+          width: MediaQuery.of(context).size.width * 0.2,
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            border: Border(
+              right: BorderSide(
+                color: AppColors.primaryBorder,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppColors.primaryBorder,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PulseAim',
+                      style: AppTextStyles.pageTitle.copyWith(fontSize: 18),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Enhanced with Level 3 Schema',
+                      style: AppTextStyles.pageSubtitle.copyWith(fontSize: 11),
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Navigation Items
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _tabs.length,
+                  itemBuilder: (context, index) {
+                    final tab = _tabs[index];
+                    final isSelected = _selectedTabIndex == index;
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.accentText.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: isSelected
+                            ? Border.all(color: AppColors.accentText.withOpacity(0.3))
+                            : null,
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        leading: Icon(
+                          tab.icon,
+                          color: isSelected
+                              ? AppColors.accentText
+                              : AppColors.secondaryText,
+                          size: 20,
+                        ),
+                        title: Text(
+                          tab.title,
+                          style: TextStyle(
+                            color: isSelected
+                                ? AppColors.accentText
+                                : AppColors.primaryText,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            fontSize: 12,
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _selectedTabIndex = index;
+                          });
+                          _tabController.animateTo(index);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // Logout Button
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: AppColors.primaryBorder,
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      context.read<AuthBloc>().add(const LogoutRequested());
+                    },
+                    icon: Icon(
+                      Icons.logout,
+                      color: AppColors.primaryText,
+                      size: 16,
+                    ),
+                    label: Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 12,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Main Content (80% width)
+        Expanded(
+          child: Container(
+            decoration: AppDecorations.pageDecoration,
+            child: TabBarView(
+              controller: _tabController,
+              children: _tabs.map((tab) => ArmoryTabView(
+                userId: userId!,
+                tabType: tab.tabType,
+              )).toList(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class TabInfo {
+  final String title;
+  final IconData icon;
+  final ArmoryTabType tabType;
+
+  const TabInfo({
+    required this.title,
+    required this.icon,
+    required this.tabType,
+  });
 }

@@ -8,6 +8,7 @@ import '../core/theme/app_theme.dart';
 import 'add_loadout_dialog.dart';
 import 'armory_card.dart';
 import 'common/common_widgets.dart';
+import 'common/responsive_grid_widget.dart';
 import 'empty_state_widget.dart';
 import 'loadout_item_card.dart';
 
@@ -62,11 +63,17 @@ class LoadoutsTabWidget extends StatelessWidget {
         );
       }
 
-      return Column(
-        children: state.loadouts
-            .map((loadout) => LoadoutItemCard(loadout: loadout, userId: userId,))
-            .toList(),
-      );
+      // Loadout cards list
+      final loadoutCards = state.loadouts
+          .map((loadout) => LoadoutItemCard(
+        loadout: loadout,
+        userId: userId,
+      ))
+          .toList();
+
+// ResponsiveGridWidget ka use
+      return ResponsiveGridWidget(children: loadoutCards);
+
     }
 
     if (state is ArmoryError) {

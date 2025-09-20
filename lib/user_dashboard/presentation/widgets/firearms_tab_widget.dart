@@ -8,6 +8,7 @@ import '../core/theme/app_theme.dart';
 import 'add_firearm_dialog.dart';
 import 'armory_card.dart';
 import 'common/common_widgets.dart';
+import 'common/responsive_grid_widget.dart'; // Import the new widget
 import 'empty_state_widget.dart';
 import 'firearm_item_card.dart';
 
@@ -63,11 +64,15 @@ class FirearmsTabWidget extends StatelessWidget {
         );
       }
 
-      return Column(
-        children: state.firearms
-            .map((firearm) => FirearmItemCard(firearm: firearm,userId: userId,))
-            .toList(),
-      );
+      final firearmCards = state.firearms
+          .map((firearm) => FirearmItemCard(
+        firearm: firearm,
+        userId: userId,
+      ))
+          .toList();
+
+      // Use the new ResponsiveGridWidget instead of Column
+      return ResponsiveGridWidget(children: firearmCards);
     }
 
     if (state is ArmoryError) {

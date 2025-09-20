@@ -23,3 +23,7 @@ class SignupRequested extends SignupEvent {
   @override
   List<Object?> get props => [firstName, email, password, location];
 }
+
+class GoogleSignUpRequested extends SignupEvent { // NEW
+  const GoogleSignUpRequested();
+}

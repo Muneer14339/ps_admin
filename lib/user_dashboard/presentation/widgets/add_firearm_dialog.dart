@@ -48,6 +48,40 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     _initializeControllers();
   }
 
+  // Helper method to determine if we should use grid layout
+  bool get _shouldUseGridLayout {
+    final orientation = MediaQuery.of(context).orientation;
+    return orientation == Orientation.landscape;
+  }
+
+  // Helper method to build responsive layout
+  Widget _buildResponsiveLayout(List<Widget> children) {
+    if (!_shouldUseGridLayout) {
+      return Column(children: children);
+    }
+
+    final List<Widget> rows = [];
+    for (int i = 0; i < children.length; i += 2) {
+      if (i + 1 < children.length) {
+        rows.add(
+          Row(
+            children: [
+              Expanded(child: children[i]),
+              const SizedBox(width: AppSizes.fieldSpacing),
+              Expanded(child: children[i + 1]),
+            ],
+          ),
+        );
+      } else {
+        rows.add(children[i]);
+      }
+      if (i + 2 < children.length) {
+        rows.add(const SizedBox(height: AppSizes.fieldSpacing));
+      }
+    }
+    return Column(children: rows);
+  }
+
   void _loadBrandsForType(String type) {
     setState(() {
       _loadingBrands = true;
@@ -114,12 +148,12 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmFiringMechanisms,
-        filterValue: caliber,       // caliber
+        filterValue: caliber,
       ),
     );
   }
 
-  void _loadMakesForSelection(String firingMachanism) {
+  void _loadMakesForSelection(String firingMechanism) {
     setState(() {
       _loadingMakes = true;
       _firearmMakes.clear();
@@ -129,7 +163,7 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.firearmMakes,
-        filterValue: firingMachanism,    // caliber
+        filterValue: firingMechanism,
       ),
     );
   }
@@ -174,7 +208,6 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     }
   }
 
-  // Update onChanged handlers in your form fields
   void _onBrandChanged(String? value) {
     setState(() => _dropdownValues['brand'] = value);
     if (value != null) {
@@ -191,9 +224,8 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
 
   void _onGenerationChanged(String? value) {
     setState(() => _dropdownValues['generation'] = value);
-    if(value!= null){
-      _loadCalibersForSelection(value); // Load calibers when generation is selected/changed
-
+    if (value != null) {
+      _loadCalibersForSelection(value);
     }
   }
 
@@ -206,11 +238,9 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
 
   void _onFiringMechanismChanged(String? value) {
     setState(() => _dropdownValues['firingMechanism'] = value);
-    if(value!= null){
-      _loadMakesForSelection(value); // Load calibers when generation is selected/changed
-
+    if (value != null) {
+      _loadMakesForSelection(value);
     }
-     // Load makes when firing mechanism is selected/changed
   }
 
   void _initializeControllers() {
@@ -224,46 +254,15 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     _dropdownValues['condition'] = 'good';
   }
 
-
-
-  // // Replace the _loadSecondaryOptionsForType method
-  // void _loadSecondaryOptionsForType(String type) {
-  //   // Load makes first
-  //   setState(() {
-  //     _loadingMakes = true;
-  //     _loadingMechanisms = false; // Ensure this is false
-  //   });
-  //
-  //   context.read<ArmoryBloc>().add(
-  //     LoadDropdownOptionsEvent(type: DropdownType.firearmMakes, filterValue: type),
-  //   );
-  // }
-
-// Replace the _handleDropdownOptionsLoaded method
   void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
     setState(() {
       if (_loadingBrands) {
         _firearmBrands = options;
         _loadingBrands = false;
-
-        // // After brands loaded, load makes
-        // final selectedType = _dropdownValues['type'];
-        // if (selectedType != null) {
-        //   _loadSecondaryOptionsForType(selectedType);
-        // }
       }
       else if (_loadingMakes) {
         _firearmMakes = options;
         _loadingMakes = false;
-
-        // // After makes loaded, load mechanisms
-        // setState(() => _loadingMechanisms = true);
-        // context.read<ArmoryBloc>().add(
-        //   LoadDropdownOptionsEvent(
-        //       type: DropdownType.firearmFiringMechanisms,
-        //       filterValue: _dropdownValues['type']
-        //   ),
-        // );
       }
       else if (_loadingMechanisms) {
         _firearmMechanisms = options;
@@ -284,14 +283,12 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
     });
   }
 
-
-
-
   @override
   void dispose() {
     _controllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<ArmoryBloc, ArmoryState>(
@@ -333,149 +330,148 @@ class _AddFirearmDialogState extends State<AddFirearmDialog> {
       padding: const EdgeInsets.all(AppSizes.dialogPadding),
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Firearm Type - No custom option allowed
-            CommonDialogWidgets.buildDropdownField(
-              label: 'Firearm Type *',
-              value: _dropdownValues['type'],
-              options: [
-                const DropdownOption(value: 'Rifle', label: 'Rifle'),
-                const DropdownOption(value: 'Pistol', label: 'Pistol'),
-                const DropdownOption(value: 'Revolver', label: 'Revolver'),
-                const DropdownOption(value: 'Shotgun', label: 'Shotgun'),
-              ],
-              onChanged: (value) {
-                setState(() => _dropdownValues['type'] = value);
-                if (value != null) _loadBrandsForType(value);
-              },
-              isRequired: true,
-            ),
-            const SizedBox(height: AppSizes.fieldSpacing),
+        child: _buildResponsiveLayout([
+          // Firearm Type
+          CommonDialogWidgets.buildDropdownField(
+            label: 'Firearm Type *',
+            value: _dropdownValues['type'],
+            options: [
+              const DropdownOption(value: 'Rifle', label: 'Rifle'),
+              const DropdownOption(value: 'Pistol', label: 'Pistol'),
+              const DropdownOption(value: 'Revolver', label: 'Revolver'),
+              const DropdownOption(value: 'Shotgun', label: 'Shotgun'),
+            ],
+            onChanged: (value) {
+              setState(() => _dropdownValues['type'] = value);
+              if (value != null) _loadBrandsForType(value);
+            },
+            isRequired: true,
+          ),
 
-            // Brand - with custom option
-            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Brand *',
-              value: _dropdownValues['brand'],
-              options: _firearmBrands,
-              onChanged: _onBrandChanged,
-              customFieldLabel: 'Brand',
-              customHintText: 'e.g., Custom Manufacturer',
-              isRequired: true,
-              isLoading: _loadingBrands,
-              enabled: _dropdownValues['type'] != null,
-            ),
-            const SizedBox(height: AppSizes.fieldSpacing),
+          // Brand
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Brand *',
+            value: _dropdownValues['brand'],
+            options: _firearmBrands,
+            onChanged: _onBrandChanged,
+            customFieldLabel: 'Brand',
+            customHintText: 'e.g., Custom Manufacturer',
+            isRequired: true,
+            isLoading: _loadingBrands,
+            enabled: _dropdownValues['type'] != null,
+          ),
 
-            // Model - with custom option
-            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Model *',
-              value: _dropdownValues['model'],
-              options: _firearmModels,
-              onChanged: _onModelChanged,
-              customFieldLabel: 'Model',
-              customHintText: 'e.g., Custom Model Name',
-              isRequired: true,
-              isLoading: _loadingModels,
-              enabled: _dropdownValues['brand'] != null,
-            ),
-            const SizedBox(height: AppSizes.fieldSpacing),
+          // Model
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Model *',
+            value: _dropdownValues['model'],
+            options: _firearmModels,
+            onChanged: _onModelChanged,
+            customFieldLabel: 'Model',
+            customHintText: 'e.g., Custom Model Name',
+            isRequired: true,
+            isLoading: _loadingModels,
+            enabled: _dropdownValues['brand'] != null,
+          ),
 
-            // Generation - with custom option
-            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Generation',
-              value: _dropdownValues['generation'],
-              options: _firearmGenerations,
-              onChanged: _onGenerationChanged,
-              customFieldLabel: 'Generation',
-              customHintText: 'e.g., Gen 5, Mk II',
-              isLoading: _loadingGenerations,
-              enabled: _dropdownValues['model'] != null,
-            ),
-            const SizedBox(height: AppSizes.fieldSpacing),
+          // Generation
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Generation',
+            value: _dropdownValues['generation'],
+            options: _firearmGenerations,
+            onChanged: _onGenerationChanged,
+            customFieldLabel: 'Generation',
+            customHintText: 'e.g., Gen 5, Mk II',
+            isLoading: _loadingGenerations,
+            enabled: _dropdownValues['model'] != null,
+          ),
 
-            // Make and Caliber - with custom options
-            CommonDialogWidgets.buildResponsiveRow([
-              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-                label: 'Caliber *',
-                value: _dropdownValues['caliber'],
-                options: _calibers,
-                onChanged: _onCaliberChanged,
-                customFieldLabel: 'Caliber',
-                customHintText: 'e.g., .300 WinMag',
-                isRequired: true,
-                isLoading: _loadingCalibers,
-                enabled: _dropdownValues['brand'] != null, // Only enable when brand is selected
-              ),
-              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-                label: 'Firing Mechanism',
-                value: _dropdownValues['firingMechanism'],
-                options: _firearmMechanisms,
-                onChanged: _onFiringMechanismChanged,
-                customFieldLabel: 'Firing Mechanism',
-                customHintText: 'e.g., Custom Action',
-                isLoading: _loadingMechanisms,
-                enabled: _dropdownValues['type'] != null,
-              ),
+          // Caliber
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Caliber *',
+            value: _dropdownValues['caliber'],
+            options: _calibers,
+            onChanged: _onCaliberChanged,
+            customFieldLabel: 'Caliber',
+            customHintText: 'e.g., .300 WinMag',
+            isRequired: true,
+            isLoading: _loadingCalibers,
+            enabled: _dropdownValues['brand'] != null,
+          ),
 
+          // Firing Mechanism
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Firing Mechanism',
+            value: _dropdownValues['firingMechanism'],
+            options: _firearmMechanisms,
+            onChanged: _onFiringMechanismChanged,
+            customFieldLabel: 'Firing Mechanism',
+            customHintText: 'e.g., Custom Action',
+            isLoading: _loadingMechanisms,
+            enabled: _dropdownValues['type'] != null,
+          ),
 
-            ]),
-            const SizedBox(height: AppSizes.fieldSpacing),
-            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Make *',
-              value: _dropdownValues['make'],
-              options: _firearmMakes,
-              onChanged: (value) => setState(() => _dropdownValues['make'] = value),
-              customFieldLabel: 'Make',
-              customHintText: 'e.g., Custom Make',
-              isRequired: true,
-              isLoading: _loadingMakes,
-              enabled: _dropdownValues['type'] != null,
-            ),
-            // Nickname and Firing Mechanism
-            CommonDialogWidgets.buildResponsiveRow([
-              CommonDialogWidgets.buildTextField(
-                label: 'Nickname/Identifier *',
-                controller: _controllers['nickname']!,
-                isRequired: true,
-                maxLength: 20, // Add this
-              ),
+          // Make
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Make *',
+            value: _dropdownValues['make'],
+            options: _firearmMakes,
+            onChanged: (value) => setState(() => _dropdownValues['make'] = value),
+            customFieldLabel: 'Make',
+            customHintText: 'e.g., Custom Make',
+            isRequired: true,
+            isLoading: _loadingMakes,
+            enabled: _dropdownValues['type'] != null,
+          ),
 
-            ]),
-            const SizedBox(height: AppSizes.fieldSpacing),
+          // Nickname
+          CommonDialogWidgets.buildTextField(
+            label: 'Nickname/Identifier *',
+            controller: _controllers['nickname']!,
+            isRequired: true,
+            maxLength: 20,
+          ),
 
-            // Status and Serial Number
-            CommonDialogWidgets.buildResponsiveRow([
-              CommonDialogWidgets.buildDropdownField(
-                label: 'Status *',
-                value: _dropdownValues['status'],
-                options: [
-                  const DropdownOption(value: 'available', label: 'Available'),
-                  const DropdownOption(value: 'in-use', label: 'In Use'),
-                  const DropdownOption(value: 'maintenance', label: 'Maintenance'),
-                ],
-                onChanged: (value) => setState(() => _dropdownValues['status'] = value),
-                isRequired: true,
-              ),
-              CommonDialogWidgets.buildTextField(
-                label: 'Serial Number',
-                controller: _controllers['serial']!,
-                maxLength: 20, // Add this
-              ),
-            ]),
-            const SizedBox(height: AppSizes.fieldSpacing),
+          // Status
+          CommonDialogWidgets.buildDropdownField(
+            label: 'Status *',
+            value: _dropdownValues['status'],
+            options: [
+              const DropdownOption(value: 'available', label: 'Available'),
+              const DropdownOption(value: 'in-use', label: 'In Use'),
+              const DropdownOption(value: 'maintenance', label: 'Maintenance'),
+            ],
+            onChanged: (value) => setState(() => _dropdownValues['status'] = value),
+            isRequired: true,
+          ),
 
-            // Notes
-            CommonDialogWidgets.buildTextField(
+          // Serial Number
+          CommonDialogWidgets.buildTextField(
+            label: 'Serial Number',
+            controller: _controllers['serial']!,
+            maxLength: 20,
+          ),
+
+          // Notes - Always full width
+          _shouldUseGridLayout
+              ? SizedBox(
+            width: double.infinity,
+            child: CommonDialogWidgets.buildTextField(
               label: 'Notes',
               controller: _controllers['notes']!,
               maxLines: 3,
-              maxLength: 200, // Add this for notes
+              maxLength: 200,
               hintText: 'Purpose, setup, special considerations, etc.',
             ),
-          ],
-        ),
+          )
+              : CommonDialogWidgets.buildTextField(
+            label: 'Notes',
+            controller: _controllers['notes']!,
+            maxLines: 3,
+            maxLength: 200,
+            hintText: 'Purpose, setup, special considerations, etc.',
+          ),
+        ]),
       ),
     );
   }

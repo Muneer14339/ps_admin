@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
   Future<UserModel> signup(String firstName, String email, String password, String? location);
+  Future<UserModel> signInWithGoogle(); // NEW
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
 }
@@ -12,24 +14,24 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
+  final GoogleSignIn googleSignIn; // NEW
 
   AuthRemoteDataSourceImpl({
     required this.firebaseAuth,
     required this.firestore,
+    required this.googleSignIn, // NEW
   });
 
   @override
   Future<UserModel> login(String email, String password) async {
-    // Firebase Auth se login
     final result = await firebaseAuth.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
 
     if (result.user != null) {
-      // Firestore se user data fetch karo
       await firestore.collection('users').doc(result.user!.uid).update({
-        'currentlyLogin': 'PA',  // <-- update current app
+        'currentlyLogin': 'PA',
       });
 
       final userDoc = await firestore
@@ -40,7 +42,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (userDoc.exists) {
         return UserModel.fromFirestore(userDoc.data()!, result.user!.uid);
       } else {
-        // Agar Firestore mein data nahi hai to basic data return karo
         return UserModel.fromFirebaseUser(result.user!);
       }
     } else {
@@ -61,18 +62,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     }
 
-    // Firebase Auth mein user create karo
     final result = await firebaseAuth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
 
     if (result.user != null) {
-      // Firebase Auth mein displayName set karo
       await result.user!.updateDisplayName(firstName);
       await result.user!.reload();
 
-      // Firestore mein users collection mein data save karo
       final userData = {
         'uid': result.user!.uid,
         'email': email,
@@ -80,9 +78,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'location': location,
         'createdAt': FieldValue.serverTimestamp(),
         'role': 0,
-        'registeredFrom': 'PA',      // <-- NEW
-        'currentlyLogin': 'PA',      // <-- initially empty
-        'password':password
+        'registeredFrom': 'PA',
+        'currentlyLogin': 'PA',
+        'password': password
       };
 
       await firestore
@@ -90,15 +88,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           .doc(result.user!.uid)
           .set(userData);
 
-      // UserModel return karo
       return UserModel.fromSignup(
-        uid: result.user!.uid,
-        email: email,
-        firstName: firstName,
-        location: location,
-        createdAt: DateTime.now(),
-        registeredFrom: 'PA',
-        currentlyLogin: 'PA'
+          uid: result.user!.uid,
+          email: email,
+          firstName: firstName,
+          location: location,
+          createdAt: DateTime.now(),
+          registeredFrom: 'PA',
+          currentlyLogin: 'PA'
       );
     } else {
       throw Exception('Signup failed');
@@ -106,7 +103,67 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<UserModel> signInWithGoogle() async {
+    // Google Sign In process
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser == null) {
+      throw Exception('Google Sign In cancelled');
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final result = await firebaseAuth.signInWithCredential(credential);
+
+    if (result.user != null) {
+      final user = result.user!;
+
+      // Check if user already exists in Firestore
+      final userDoc = await firestore.collection('users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        // Existing user - just update currentlyLogin
+        await firestore.collection('users').doc(user.uid).update({
+          'currentlyLogin': 'PA',
+        });
+
+        return UserModel.fromFirestore(userDoc.data()!, user.uid);
+      } else {
+        // New user - create profile in Firestore
+        final userData = {
+          'uid': user.uid,
+          'email': user.email ?? '',
+          'firstName': user.displayName ?? 'Google User',
+          'location': null,
+          'createdAt': FieldValue.serverTimestamp(),
+          'role': 0,
+          'registeredFrom': 'PA',
+          'currentlyLogin': 'PA',
+        };
+
+        await firestore.collection('users').doc(user.uid).set(userData);
+
+        return UserModel.fromSignup(
+            uid: user.uid,
+            email: user.email ?? '',
+            firstName: user.displayName ?? 'Google User',
+            location: null,
+            createdAt: DateTime.now(),
+            registeredFrom: 'PA',
+            currentlyLogin: 'PA'
+        );
+      }
+    } else {
+      throw Exception('Google Sign In failed');
+    }
+  }
+
+  @override
   Future<void> logout() async {
+    await googleSignIn.signOut(); // NEW
     await firebaseAuth.signOut();
   }
 
@@ -114,7 +171,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<UserModel?> getCurrentUser() async {
     final user = firebaseAuth.currentUser;
     if (user != null) {
-      // Firestore se complete user data fetch karo
       final userDoc = await firestore
           .collection('users')
           .doc(user.uid)

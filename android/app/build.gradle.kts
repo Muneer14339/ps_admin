@@ -29,9 +29,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("customDebug") {
+            storeFile = file("my-debug.keystore")
+            storePassword = "android"
+            keyAlias = "mydebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("customDebug")
+        }
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("customDebug") // optional: use same for release if not uploading to Play Store yet
         }
     }
 }

@@ -11,6 +11,7 @@ import 'add_maintenance_dialog.dart';
 import 'add_tool_dialog.dart';
 import 'armory_card.dart';
 import 'common/common_widgets.dart';
+import 'common/responsive_grid_widget.dart';
 import 'empty_state_widget.dart';
 import 'maintenance_item_card.dart';
 import 'tool_item_card.dart';
@@ -133,20 +134,40 @@ class _ToolsTabWidgetState extends State<ToolsTabWidget> {
   }
 
   Widget _buildToolsSection() {
+    // Tools cards list
+    final toolCards = _tools
+        .map((tool) => ToolItemCard(
+      tool: tool,
+      userId: widget.userId,
+    ))
+        .toList();
+
     return CommonWidgets.buildExpandableSection(
       title: 'Tools & Equipment',
       subtitle: 'cleaning kits, torque wrenches, chronographs',
       initiallyExpanded: _tools.isNotEmpty,
-      children: _tools.map((tool) => ToolItemCard(tool: tool,userId: widget.userId,)).toList(),
+      children: [
+        ResponsiveGridWidget(children: toolCards),
+      ],
     );
   }
 
   Widget _buildMaintenanceSection() {
+    // Maintenance cards list
+    final maintenanceCards = _maintenance
+        .map((maintenance) => MaintenanceItemCard(
+      maintenance: maintenance,
+      userId: widget.userId,
+    ))
+        .toList();
+
     return CommonWidgets.buildExpandableSection(
       title: 'Maintenance Logs',
       subtitle: 'cleaning, lubrication, repairs, inspections',
       initiallyExpanded: _maintenance.isNotEmpty,
-      children: _maintenance.map((maintenance) => MaintenanceItemCard(maintenance: maintenance, userId: widget.userId,)).toList(),
+      children: [
+        ResponsiveGridWidget(children: maintenanceCards),
+      ],
     );
   }
 
