@@ -355,12 +355,13 @@ class ArmoryBloc extends Bloc<ArmoryEvent, ArmoryState> {
       },
     );
   }
+
+  void _onShowAddForm(ShowAddFormEvent event, Emitter<ArmoryState> emit) {
+    emit(ShowingAddForm(tabType: event.tabType));
+  }
+
+  void _onHideForm(HideFormEvent event, Emitter<ArmoryState> emit) {
+    emit(const ArmoryInitial());
+  }
 }
 
-void _onShowAddForm(ShowAddFormEvent event, Emitter<ArmoryState> emit) {
-  emit(ShowingAddForm(tabType: event.tabType));
-}
-
-void _onHideForm(HideFormEvent event, Emitter<ArmoryState> emit) {
-  emit(const ArmoryInitial());
-}
