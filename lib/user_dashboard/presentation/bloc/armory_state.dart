@@ -85,27 +85,6 @@ class ArmoryError extends ArmoryState {
   List<Object> get props => [message];
 }
 
-// Combined state for all armory data
-class ArmoryDataLoaded extends ArmoryState {
-  final List<ArmoryFirearm> firearms;
-  final List<ArmoryAmmunition> ammunition;
-  final List<ArmoryGear> gear;
-  final List<ArmoryTool> tools;
-  final List<ArmoryLoadout> loadouts;
-
-  const ArmoryDataLoaded({
-    required this.firearms,
-    required this.ammunition,
-    required this.gear,
-    required this.tools,
-    required this.loadouts,
-  });
-
-  @override
-  List<Object> get props => [firearms, ammunition, gear, tools, loadouts];
-}
-
-
 class MaintenanceLoaded extends ArmoryState {
   final List<ArmoryMaintenance> maintenance;
   const MaintenanceLoaded({required this.maintenance});
