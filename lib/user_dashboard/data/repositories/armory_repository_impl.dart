@@ -411,9 +411,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
 
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands() async {
+  Future<Either<Failure, List<DropdownOption>>> getAmmoCalibers() async {
     try {
-      final options = await remoteDataSource.getAmmunitionBrands();
+      final options = await remoteDataSource.getAmmoCalibers();
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -421,9 +421,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getAmmoCalibers([String? brand]) async{
+  Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands([String? caliber]) async {
     try {
-      final options = await remoteDataSource.getAmmoCalibers(brand);
+      final options = await remoteDataSource.getAmmunitionBrands(caliber);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));
@@ -431,9 +431,9 @@ class ArmoryRepositoryImpl implements ArmoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? caliber]) async {
+  Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? brand]) async {
     try {
-      final options = await remoteDataSource.getBulletTypes(caliber);
+      final options = await remoteDataSource.getBulletTypes(brand);
       return Right(options);
     } catch (e) {
       return Left(FileFailure(e.toString()));

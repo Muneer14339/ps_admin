@@ -59,10 +59,9 @@ abstract class ArmoryRepository {
   Future<Either<Failure, List<DropdownOption>>> getFirearmMakes([
     String?  firingMechanism]);
 
-  Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands();
-  Future<Either<Failure, List<DropdownOption>>> getAmmoCalibers([
-    String? brand]);
-  Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? caliber]);
+  Future<Either<Failure, List<DropdownOption>>> getAmmoCalibers();
+  Future<Either<Failure, List<DropdownOption>>> getAmmunitionBrands([String? caliber]);
+  Future<Either<Failure, List<DropdownOption>>> getBulletTypes([String? brand]);
 
   Future<Either<Failure, List<ArmoryMaintenance>>> getMaintenance(String userId);
   Future<Either<Failure, void>> addMaintenance(String userId, ArmoryMaintenance maintenance);

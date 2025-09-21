@@ -47,10 +47,9 @@ abstract class ArmoryRemoteDataSource {
   Future<List<DropdownOption>> getFirearmFiringMechanisms( [String? caliber]);
   Future<List<DropdownOption>> getFirearmMakes([String?  firingMechanism,]);
   Future<List<DropdownOption>> getCalibers([String? generation,]);
-  Future<List<DropdownOption>> getAmmunitionBrands();
-  Future<List<DropdownOption>> getBulletTypes([String? caliber]);
-  Future<List<DropdownOption>> getAmmoCalibers([String? brand]);
-
+  Future<List<DropdownOption>> getAmmoCalibers();  // No parameter
+  Future<List<DropdownOption>> getAmmunitionBrands([String? caliber]);  // Filter by caliber
+  Future<List<DropdownOption>> getBulletTypes([String? brand]);  // Filter by brand
 
   // Maintenance
   Future<List<ArmoryMaintenanceModel>> getMaintenance(String userId);
@@ -632,20 +631,63 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
+  // Get calibers with user's firearm calibers prioritized
   @override
-  Future<List<DropdownOption>> getAmmunitionBrands() async {
+  Future<List<DropdownOption>> getAmmoCalibers([String? brand]) async {
     try {
       await initializeAmmoData();
-      final brands = allAmmoData
+      final userfirearmforcaliber = await _getUserFirearmsData(); // Also load firearm data
+
+      // Get calibers from ammunition data
+      final ammoCalibers = allAmmoData
+          .map((e) => e['caliber']?.toString() ?? '')
+          .where((c) => c.isNotEmpty)
+          .toSet();
+
+      // Get calibers from user's firearms (priority calibers)
+      final userFirearmCalibers = userfirearmforcaliber
+          .map((e) => e['caliber']?.toString() ?? '')
+          .where((c) => c.isNotEmpty)
+          .toSet();
+
+      // Combine: user firearms calibers first, then other calibers
+      final priorityCalibers = userFirearmCalibers.toList()..sort();
+      final otherCalibers = ammoCalibers.difference(userFirearmCalibers).toList()..sort();
+      final allCalibers = [...priorityCalibers, ...otherCalibers];
+
+      filteredAmmoBrands = allAmmoData; // Save for next filter
+      filteredAmmoCaliber = filteredAmmoBulletWeight = null;
+
+      return allCalibers.map((caliber) => DropdownOption(
+          value: caliber,
+          label: caliber
+      )).toList();
+    } catch (e) {
+      throw Exception('Failed to get calibers: $e');
+    }
+  }
+
+// Get brands filtered by caliber
+  @override
+  Future<List<DropdownOption>> getAmmunitionBrands([String? caliber]) async {
+    try {
+      if (filteredAmmoBrands == null) return [];
+
+      final filtered = _filterData(
+        source: filteredAmmoBrands!,
+        field: 'caliber',
+        value: caliber,
+      );
+
+      final brands = filtered
           .map((e) => e['brand']?.toString() ?? '')
           .where((b) => b.isNotEmpty)
           .toSet()
           .toList();
       brands.sort();
-      filteredAmmoBrands = allAmmoData;
 
-      // Reset deeper filters
-      filteredAmmoCaliber = filteredAmmoBulletWeight = null;
+      filteredAmmoCaliber = filtered; // Save for bullet types filter
+      filteredAmmoBulletWeight = null;
 
       return brands.map((brand) => DropdownOption(value: brand, label: brand)).toList();
     } catch (e) {
@@ -653,42 +695,20 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
     }
   }
 
+// Bullet types filtered by caliber (from previous selection) and optionally brand
   @override
-  Future<List<DropdownOption>> getAmmoCalibers([String? brand]) async
-  {
-    try {
-      if (filteredAmmoBrands == null) return [];
-      final filtered = _filterData(
-        source: filteredAmmoBrands!,
-        field: 'brand',
-        value: brand,
-      );
-
-      final calibers = filtered
-          .map((e) => e['caliber']?.toString() ?? '')
-          .where((c) => c.isNotEmpty)
-          .toSet()
-          .toList();
-      calibers.sort();
-      filteredAmmoCaliber = filtered;
-
-      // Reset deeper filter
-      filteredAmmoBulletWeight = null;
-      return calibers.map((caliber) => DropdownOption(value: caliber, label: caliber)).toList();
-    } catch (e) {
-      throw Exception('Failed to get calibers: $e');
-    }
-  }
-
-  @override
-  Future<List<DropdownOption>> getBulletTypes([String? caliber]) async {
+  Future<List<DropdownOption>> getBulletTypes([String? brand]) async {
     try {
       if (filteredAmmoCaliber == null) return [];
-      final filtered = _filterData(
+
+      // If brand provided, filter further
+      final filtered = brand != null && brand.isNotEmpty
+          ? _filterData(
         source: filteredAmmoCaliber!,
-        field: 'caliber',
-        value: caliber,
-      );
+        field: 'brand',
+        value: brand,
+      )
+          : filteredAmmoCaliber!;
 
       final bulletWeights = filtered
           .map((e) => e['bullet weight (gr)']?.toString() ?? '')
@@ -696,6 +716,7 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
           .toSet()
           .toList();
       bulletWeights.sort();
+
       filteredAmmoBulletWeight = filtered;
 
       return bulletWeights.map((bullet) => DropdownOption(value: bullet, label: bullet)).toList();

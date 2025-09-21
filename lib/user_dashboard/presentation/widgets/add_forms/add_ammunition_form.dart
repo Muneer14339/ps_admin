@@ -53,29 +53,29 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
   }
 
   void _loadInitialData() {
-    setState(() => _loadingBrands = true);
+    setState(() => _loadingCalibers = true);
     context.read<ArmoryBloc>().add(
-      const LoadDropdownOptionsEvent(type: DropdownType.ammunitionBrands),
+      const LoadDropdownOptionsEvent(type: DropdownType.ammunitionCaliber),
     );
   }
 
-  void _loadCalibersForBrand(String brand) {
+  void _loadBrandForCalibers(String caliber) {
     setState(() {
-      _loadingCalibers = true;
-      _calibers.clear();
+      _loadingBrands = true;
+      _ammunitionBrands.clear();
       _bulletTypes.clear();
-      _dropdownValues['caliber'] = null;
+      _dropdownValues['brands'] = null;
     });
 
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
-        type: DropdownType.ammunitionCaliber,
-        filterValue: brand,
+        type: DropdownType.ammunitionBrands,
+        filterValue: caliber,
       ),
     );
   }
 
-  void _generateBulletTypesForCaliber(String caliber) {
+  void _generateBulletTypesForBrand(String brand) {
     setState(() {
       _loadingBulletTypes = true;
       _bulletTypes.clear();
@@ -83,12 +83,12 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
     });
 
     // Check if caliber is custom - pass empty string to show all bullet types
-    final filterCaliber = EnhancedDialogWidgets.isCustomValue(caliber) ? '' : caliber;
+    final filterBrand = EnhancedDialogWidgets.isCustomValue(brand) ? '' : brand;
 
     context.read<ArmoryBloc>().add(
       LoadDropdownOptionsEvent(
         type: DropdownType.bulletTypes,
-        filterValue: filterCaliber,
+        filterValue: filterBrand,
       ),
     );
   }
@@ -154,16 +154,16 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
   }
 
   void _handleDropdownOptionsLoaded(List<DropdownOption> options) {
-    if (_loadingBrands) {
-      setState(() {
-        _ammunitionBrands = options;
-        _loadingBrands = false;
-      });
-    }
-    else if (_loadingCalibers) {
+    if (_loadingCalibers) {
       setState(() {
         _calibers = options;
         _loadingCalibers = false;
+      });
+    }
+    else if (_loadingBrands) {
+      setState(() {
+        _ammunitionBrands = options;
+         _loadingBrands= false;
       });
     }
     else if (_loadingBulletTypes) {  // Add this condition
@@ -182,6 +182,25 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            // Caliber - with custom option
+            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+              label: 'Caliber *',
+              value: _dropdownValues['caliber'],
+              options: _calibers,
+              onChanged: (value) {
+                setState(() => _dropdownValues['caliber'] = value);
+                if (value != null) _loadBrandForCalibers(value);
+              },
+              customFieldLabel: 'Caliber',
+              customHintText: 'e.g., .300 WinMag, 6.5 PRC',
+              isRequired: true,
+              isLoading: _loadingCalibers,
+
+            ),
+
+            const SizedBox(height: AppSizes.fieldSpacing),
+
             // Brand - with custom option
             EnhancedDialogWidgets.buildDropdownFieldWithCustom(
               label: 'Brand *',
@@ -189,12 +208,13 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
               options: _ammunitionBrands,
               onChanged: (value) {
                 setState(() => _dropdownValues['brand'] = value);
-                if (value != null) _loadCalibersForBrand(value);
+                if (value != null) _generateBulletTypesForBrand(value);
               },
               customFieldLabel: 'Brand',
               customHintText: 'e.g., Custom Ammo Maker',
               isRequired: true,
               isLoading: _loadingBrands,
+              enabled: _dropdownValues['caliber'] != null,
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
@@ -205,23 +225,7 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
               maxLength: 20, // Add this
               hintText: 'e.g., Gold Medal Match, V-Max',
             ),
-            const SizedBox(height: AppSizes.fieldSpacing),
 
-            // Caliber - with custom option
-            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Caliber *',
-              value: _dropdownValues['caliber'],
-              options: _calibers,
-              onChanged: (value) {
-                setState(() => _dropdownValues['caliber'] = value);
-                if (value != null) _generateBulletTypesForCaliber(value);
-              },
-              customFieldLabel: 'Caliber',
-              customHintText: 'e.g., .300 WinMag, 6.5 PRC',
-              isRequired: true,
-              isLoading: _loadingCalibers,
-              enabled: _dropdownValues['brand'] != null,
-            ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
             // Bullet Type - suggestions based on caliber
