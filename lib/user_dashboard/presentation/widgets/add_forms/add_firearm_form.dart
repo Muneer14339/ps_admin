@@ -1,6 +1,7 @@
 // lib/user_dashboard/presentation/widgets/add_firearm_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pa_sreens/user_dashboard/presentation/widgets/common/common_widgets.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../domain/entities/armory_firearm.dart';
 import '../../../domain/entities/dropdown_option.dart';
@@ -54,33 +55,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
     return orientation == Orientation.landscape;
   }
 
-  // Helper method to build responsive layout
-  Widget _buildResponsiveLayout(List<Widget> children) {
-    if (!_shouldUseGridLayout) {
-      return Column(children: children);
-    }
 
-    final List<Widget> rows = [];
-    for (int i = 0; i < children.length; i += 2) {
-      if (i + 1 < children.length) {
-        rows.add(
-          Row(
-            children: [
-              Expanded(child: children[i]),
-              const SizedBox(width: AppSizes.fieldSpacing),
-              Expanded(child: children[i + 1]),
-            ],
-          ),
-        );
-      } else {
-        rows.add(children[i]);
-      }
-      if (i + 2 < children.length) {
-        rows.add(const SizedBox(height: AppSizes.fieldSpacing));
-      }
-    }
-    return Column(children: rows);
-  }
 
   void _loadBrandsForType(String type) {
     setState(() {
@@ -350,7 +325,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
       padding: const EdgeInsets.all(AppSizes.dialogPadding),
       child: Form(
         key: _formKey,
-        child: _buildResponsiveLayout([
+        child: CommonWidgets.buildResponsiveLayout([
           // Firearm Type
           CommonDialogWidgets.buildDropdownField(
             label: 'Firearm Type *',
@@ -396,7 +371,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
 
           // Generation
           EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-            label: 'Generation',
+            label: 'Generation *',
             value: _dropdownValues['generation'],
             options: _firearmGenerations,
             onChanged: _onGenerationChanged,
@@ -404,6 +379,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
             customHintText: 'e.g., Gen 5, Mk II',
             isLoading: _loadingGenerations,
             enabled: _dropdownValues['model'] != null,
+            isRequired: true
           ),
 
           // Caliber
@@ -421,7 +397,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
 
           // Firing Mechanism
           EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-            label: 'Firing Mechanism',
+            label: 'Firing Mechanism *',
             value: _dropdownValues['firingMechanism'],
             options: _firearmMechanisms,
             onChanged: _onFiringMechanismChanged,
@@ -429,6 +405,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
             customHintText: 'e.g., Custom Action',
             isLoading: _loadingMechanisms,
             enabled: _dropdownValues['type'] != null,
+            isRequired: true
           ),
 
           // Make
@@ -491,7 +468,7 @@ class _AddFirearmFormState extends State<AddFirearmForm> {
             maxLength: 200,
             hintText: 'Purpose, setup, special considerations, etc.',
           ),
-        ]),
+        ], _shouldUseGridLayout),
       ),
     );
   }

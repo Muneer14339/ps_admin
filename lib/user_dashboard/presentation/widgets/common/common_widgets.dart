@@ -282,4 +282,32 @@ class CommonWidgets {
       ),
     );
   }
+
+  // Helper method to build responsive layout
+  static Widget buildResponsiveLayout(List<Widget> children, bool _shouldUseGridLayout) {
+    if (!_shouldUseGridLayout) {
+      return Column(children: children);
+    }
+
+    final List<Widget> rows = [];
+    for (int i = 0; i < children.length; i += 2) {
+      if (i + 1 < children.length) {
+        rows.add(
+          Row(
+            children: [
+              Expanded(child: children[i]),
+              const SizedBox(width: AppSizes.fieldSpacing),
+              Expanded(child: children[i + 1]),
+            ],
+          ),
+        );
+      } else {
+        rows.add(children[i]);
+      }
+      if (i + 2 < children.length) {
+        rows.add(const SizedBox(height: AppSizes.fieldSpacing));
+      }
+    }
+    return Column(children: rows);
+  }
 }

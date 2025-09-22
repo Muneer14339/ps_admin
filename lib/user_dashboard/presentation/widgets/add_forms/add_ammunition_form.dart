@@ -1,6 +1,7 @@
 // lib/user_dashboard/presentation/widgets/add_ammunition_dialog.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pa_sreens/user_dashboard/presentation/widgets/common/common_widgets.dart';
 
 import '../../../../core/usecases/usecase.dart';
 import '../../../domain/entities/armory_ammunition.dart';
@@ -174,124 +175,121 @@ class _AddAmmunitionFormState extends State<AddAmmunitionForm> {
     }
   }
 
+  // Helper method to determine if we should use grid layout
+  bool get _shouldUseGridLayout {
+    final orientation = MediaQuery.of(context).orientation;
+    return orientation == Orientation.landscape;
+  }
+
   Widget _buildForm() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.dialogPadding),
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: CommonWidgets.buildResponsiveLayout(  [
 
-            // Caliber - with custom option
+          // Caliber - with custom option
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Caliber *',
+            value: _dropdownValues['caliber'],
+            options: _calibers,
+            onChanged: (value) {
+              setState(() => _dropdownValues['caliber'] = value);
+              if (value != null) _loadBrandForCalibers(value);
+            },
+            customFieldLabel: 'Caliber',
+            customHintText: 'e.g., .300 WinMag, 6.5 PRC',
+            isRequired: true,
+            isLoading: _loadingCalibers,
+
+          ),
+
+
+          // Brand - with custom option
+          EnhancedDialogWidgets.buildDropdownFieldWithCustom(
+            label: 'Brand *',
+            value: _dropdownValues['brand'],
+            options: _ammunitionBrands,
+            onChanged: (value) {
+              setState(() => _dropdownValues['brand'] = value);
+              if (value != null) _generateBulletTypesForBrand(value);
+            },
+            customFieldLabel: 'Brand',
+            customHintText: 'e.g., Custom Ammo Maker',
+            isRequired: true,
+            isLoading: _loadingBrands,
+            enabled: _dropdownValues['caliber'] != null,
+          ),
+
+          // Product Line
+          CommonDialogWidgets.buildTextField(
+            label: 'Product Line',
+            controller: _controllers['line']!,
+            maxLength: 20, // Add this
+            hintText: 'e.g., Gold Medal Match, V-Max',
+          ),
+
+
+          // Bullet Type - suggestions based on caliber
+          if (_dropdownValues['caliber'] != null) ...[
             EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Caliber *',
-              value: _dropdownValues['caliber'],
-              options: _calibers,
+              label: 'Bullet Weight & Type *',
+              value: _dropdownValues['bulletType'],
+              options: _bulletTypes,
               onChanged: (value) {
-                setState(() => _dropdownValues['caliber'] = value);
-                if (value != null) _loadBrandForCalibers(value);
+                setState(() => _dropdownValues['bulletType'] = value);
+                if (value != null) {
+                  _controllers['bullet']?.text = EnhancedDialogWidgets.getDisplayValue(value);
+                }
               },
-              customFieldLabel: 'Caliber',
-              customHintText: 'e.g., .300 WinMag, 6.5 PRC',
+              customFieldLabel: 'Bullet Type',
+              customHintText: 'e.g., 77gr TMK, 168gr ELD-M',
               isRequired: true,
-              isLoading: _loadingCalibers,
-
-            ),
-
-            const SizedBox(height: AppSizes.fieldSpacing),
-
-            // Brand - with custom option
-            EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-              label: 'Brand *',
-              value: _dropdownValues['brand'],
-              options: _ammunitionBrands,
-              onChanged: (value) {
-                setState(() => _dropdownValues['brand'] = value);
-                if (value != null) _generateBulletTypesForBrand(value);
-              },
-              customFieldLabel: 'Brand',
-              customHintText: 'e.g., Custom Ammo Maker',
-              isRequired: true,
-              isLoading: _loadingBrands,
+              isLoading: _loadingBulletTypes,
               enabled: _dropdownValues['caliber'] != null,
             ),
-            const SizedBox(height: AppSizes.fieldSpacing),
-
-            // Product Line
-            CommonDialogWidgets.buildTextField(
-              label: 'Product Line',
-              controller: _controllers['line']!,
-              maxLength: 20, // Add this
-              hintText: 'e.g., Gold Medal Match, V-Max',
-            ),
-
-            const SizedBox(height: AppSizes.fieldSpacing),
-
-            // Bullet Type - suggestions based on caliber
-            if (_dropdownValues['caliber'] != null) ...[
-              EnhancedDialogWidgets.buildDropdownFieldWithCustom(
-                label: 'Bullet Weight & Type *',
-                value: _dropdownValues['bulletType'],
-                options: _bulletTypes,
-                onChanged: (value) {
-                  setState(() => _dropdownValues['bulletType'] = value);
-                  if (value != null) {
-                    _controllers['bullet']?.text = EnhancedDialogWidgets.getDisplayValue(value);
-                  }
-                },
-                customFieldLabel: 'Bullet Type',
-                customHintText: 'e.g., 77gr TMK, 168gr ELD-M',
-                isRequired: true,
-                isLoading: _loadingBulletTypes,
-                enabled: _dropdownValues['caliber'] != null,
-              ),
-              const SizedBox(height: AppSizes.fieldSpacing),
-            ],
-
-
-            // Quantity and Status
-            CommonDialogWidgets.buildResponsiveRow([
-              CommonDialogWidgets.buildTextField(
-                label: 'Quantity (rounds) *',
-                controller: _controllers['quantity']!,
-                isRequired: true,
-                keyboardType: TextInputType.number,
-                hintText: '20',
-              ),
-              CommonDialogWidgets.buildDropdownField(
-                label: 'Status *',
-                value: _dropdownValues['status'],
-                options: [
-                  const DropdownOption(value: 'available', label: 'Available'),
-                  const DropdownOption(value: 'low-stock', label: 'Low Stock'),
-                  const DropdownOption(value: 'out-of-stock', label: 'Out of Stock'),
-                ],
-                onChanged: (value) => setState(() => _dropdownValues['status'] = value),
-                isRequired: true,
-              ),
-            ]),
-            const SizedBox(height: AppSizes.fieldSpacing),
-
-            // Lot Number
-            CommonDialogWidgets.buildTextField(
-              label: 'Lot Number',
-              controller: _controllers['lot']!,
-              maxLength: 15, // Add this
-              hintText: 'ABC1234',
-            ),
-            const SizedBox(height: AppSizes.fieldSpacing),
-
-            // Notes
-            CommonDialogWidgets.buildTextField(
-              label: 'Notes',
-              controller: _controllers['notes']!,
-              maxLines: 3,
-              maxLength: 200, // Add this
-              hintText: 'Performance notes, accuracy data, etc.',
-            ),
           ],
-        ),
+
+
+          // Quantity and Status
+          CommonDialogWidgets.buildResponsiveRow([
+            CommonDialogWidgets.buildTextField(
+              label: 'Quantity (rounds) *',
+              controller: _controllers['quantity']!,
+              isRequired: true,
+              keyboardType: TextInputType.number,
+              hintText: '20',
+            ),
+            CommonDialogWidgets.buildDropdownField(
+              label: 'Status *',
+              value: _dropdownValues['status'],
+              options: [
+                const DropdownOption(value: 'available', label: 'Available'),
+                const DropdownOption(value: 'low-stock', label: 'Low Stock'),
+                const DropdownOption(value: 'out-of-stock', label: 'Out of Stock'),
+              ],
+              onChanged: (value) => setState(() => _dropdownValues['status'] = value),
+              isRequired: true,
+            ),
+          ]),
+
+          // Lot Number
+          CommonDialogWidgets.buildTextField(
+            label: 'Lot Number',
+            controller: _controllers['lot']!,
+            maxLength: 15, // Add this
+            hintText: 'ABC1234',
+          ),
+
+          // Notes
+          CommonDialogWidgets.buildTextField(
+            label: 'Notes',
+            controller: _controllers['notes']!,
+            maxLines: 3,
+            maxLength: 200, // Add this
+            hintText: 'Performance notes, accuracy data, etc.',
+          ),
+        ], _shouldUseGridLayout),
       ),
     );
   }

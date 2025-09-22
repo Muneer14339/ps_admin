@@ -86,6 +86,8 @@ class CommonDialogWidgets {
             hintText: hintText,
             enabled: enabled,
           ),
+          // Add this line to hide the character counter
+          buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
           validator: validator ?? (isRequired
               ? (value) {
             if (value == null || value.trim().isEmpty) {

@@ -43,32 +43,32 @@ class _UserDashboardViewState extends State<UserDashboardView>
   final List<TabInfo> _tabs = [
     TabInfo(
       title: 'Firearms',
-      icon: Icons.gps_fixed,
+      //icon: Icons.gps_fixed,
       tabType: ArmoryTabType.firearms,
     ),
     TabInfo(
       title: 'Ammo',
-      icon: Icons.fiber_manual_record,
+      //icon: Icons.fiber_manual_record,
       tabType: ArmoryTabType.ammunition,
     ),
     TabInfo(
       title: 'Gear',
-      icon: Icons.inventory,
+     // icon: Icons.inventory,
       tabType: ArmoryTabType.gear,
     ),
     TabInfo(
       title: 'Tools & Maint.',
-      icon: Icons.build,
+      //icon: Icons.build,
       tabType: ArmoryTabType.tools,
     ),
     TabInfo(
       title: 'Loadouts',
-      icon: Icons.playlist_add_check,
+      //icon: Icons.playlist_add_check,
       tabType: ArmoryTabType.loadouts,
     ),
     TabInfo(
       title: 'Report',
-      icon: Icons.analytics,
+      //icon: Icons.analytics,
       tabType: ArmoryTabType.report,
     ),
   ];
@@ -190,7 +190,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
       children: [
         // Sidebar Navigation (20% width)
         Container(
-          width: MediaQuery.of(context).size.width * 0.2,
+          width: MediaQuery.of(context).size.width * 0.15,
           decoration: BoxDecoration(
             color: AppColors.cardBackground,
             border: Border(
@@ -252,14 +252,7 @@ class _UserDashboardViewState extends State<UserDashboardView>
                       ),
                       child: ListTile(
                         dense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        leading: Icon(
-                          tab.icon,
-                          color: isSelected
-                              ? AppColors.accentText
-                              : AppColors.secondaryText,
-                          size: 20,
-                        ),
+                       // contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         title: Text(
                           tab.title,
                           style: TextStyle(
@@ -343,12 +336,12 @@ class _UserDashboardViewState extends State<UserDashboardView>
 
 class TabInfo {
   final String title;
-  final IconData icon;
+  //final IconData icon;
   final ArmoryTabType tabType;
 
   const TabInfo({
     required this.title,
-    required this.icon,
+   // required this.icon,
     required this.tabType,
   });
 }

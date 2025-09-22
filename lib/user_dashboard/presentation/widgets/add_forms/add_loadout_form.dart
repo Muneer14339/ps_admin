@@ -177,23 +177,25 @@ class _AddLoadoutFormState extends State<AddLoadoutForm> {
 
             // Firearm Selection
             CommonDialogWidgets.buildDropdownField(
-              label: 'Firearm',
+              label: 'Firearm *',
               value: _selectedFirearmId,
               options: _firearmOptions,
               onChanged: (value) => setState(() => _selectedFirearmId = value),
               isLoading: _loadingFirearms,
               enabled: !_loadingFirearms,
+              isRequired: true
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
             // Ammunition Selection
             CommonDialogWidgets.buildDropdownField(
-              label: 'Ammunition',
+              label: 'Ammunition *',
               value: _selectedAmmunitionId,
               options: _ammunitionOptions,
               onChanged: (value) => setState(() => _selectedAmmunitionId = value),
               isLoading: _loadingAmmunition,
               enabled: !_loadingAmmunition,
+              isRequired: true
             ),
             const SizedBox(height: AppSizes.fieldSpacing),
 
