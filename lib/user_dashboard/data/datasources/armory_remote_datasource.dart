@@ -636,32 +636,42 @@ class ArmoryRemoteDataSourceImpl implements ArmoryRemoteDataSource {
   Future<List<DropdownOption>> getAmmoCalibers([String? brand]) async {
     try {
       await initializeAmmoData();
-      final userfirearmforcaliber = await _getUserFirearmsData(); // Also load firearm data
+      final userfirearmforcaliber = await _getUserFirearmsData();
 
-      // Get calibers from ammunition data
       final ammoCalibers = allAmmoData
           .map((e) => e['caliber']?.toString() ?? '')
           .where((c) => c.isNotEmpty)
           .toSet();
 
-      // Get calibers from user's firearms (priority calibers)
       final userFirearmCalibers = userfirearmforcaliber
           .map((e) => e['caliber']?.toString() ?? '')
           .where((c) => c.isNotEmpty)
           .toSet();
 
-      // Combine: user firearms calibers first, then other calibers
       final priorityCalibers = userFirearmCalibers.toList()..sort();
       final otherCalibers = ammoCalibers.difference(userFirearmCalibers).toList()..sort();
-      final allCalibers = [...priorityCalibers, ...otherCalibers];
 
-      filteredAmmoBrands = allAmmoData; // Save for next filter
+      // Create options list with separator
+      final List<DropdownOption> options = [];
+
+      // Add priority calibers
+      options.addAll(priorityCalibers.map((caliber) => DropdownOption(
+          value: caliber, label: caliber)));
+
+      // Add separator if both lists have items
+      if (priorityCalibers.isNotEmpty && otherCalibers.isNotEmpty) {
+        options.add(const DropdownOption(
+            value: '---SEPARATOR---', label: '── Other Calibers ──'));
+      }
+
+      // Add other calibers
+      options.addAll(otherCalibers.map((caliber) => DropdownOption(
+          value: caliber, label: caliber)));
+
+      filteredAmmoBrands = allAmmoData;
       filteredAmmoCaliber = filteredAmmoBulletWeight = null;
 
-      return allCalibers.map((caliber) => DropdownOption(
-          value: caliber,
-          label: caliber
-      )).toList();
+      return options;
     } catch (e) {
       throw Exception('Failed to get calibers: $e');
     }

@@ -14,8 +14,12 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await remoteDataSource.login(email, password);
       return Right(user);
+    } on Exception catch (e) {
+      // Extract message from Exception
+      final message = e.toString().replaceFirst('Exception: ', '');
+      return Left(AuthFailure(message));
     } catch (e) {
-      return Left(AuthFailure(e.toString()));
+      return Left(AuthFailure('An unexpected error occurred'));
     }
   }
 
@@ -24,8 +28,12 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await remoteDataSource.signup(firstName, email, password, location);
       return Right(user);
+    } on Exception catch (e) {
+      // Extract message from Exception
+      final message = e.toString().replaceFirst('Exception: ', '');
+      return Left(AuthFailure(message));
     } catch (e) {
-      return Left(AuthFailure(e.toString()));
+      return Left(AuthFailure('An unexpected error occurred'));
     }
   }
 
@@ -34,8 +42,12 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await remoteDataSource.signInWithGoogle();
       return Right(user);
+    } on Exception catch (e) {
+      // Extract message from Exception
+      final message = e.toString().replaceFirst('Exception: ', '');
+      return Left(AuthFailure(message));
     } catch (e) {
-      return Left(AuthFailure(e.toString()));
+      return Left(AuthFailure('An unexpected error occurred'));
     }
   }
 
@@ -44,8 +56,12 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await remoteDataSource.logout();
       return const Right(null);
+    } on Exception catch (e) {
+      // Extract message from Exception
+      final message = e.toString().replaceFirst('Exception: ', '');
+      return Left(AuthFailure(message));
     } catch (e) {
-      return Left(AuthFailure(e.toString()));
+      return Left(AuthFailure('An unexpected error occurred'));
     }
   }
 
@@ -54,8 +70,12 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await remoteDataSource.getCurrentUser();
       return Right(user);
+    } on Exception catch (e) {
+      // Extract message from Exception
+      final message = e.toString().replaceFirst('Exception: ', '');
+      return Left(AuthFailure(message));
     } catch (e) {
-      return Left(AuthFailure(e.toString()));
+      return Left(AuthFailure('An unexpected error occurred'));
     }
   }
 }

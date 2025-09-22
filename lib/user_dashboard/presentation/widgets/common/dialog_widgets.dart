@@ -158,9 +158,13 @@ class CommonDialogWidgets {
               ),
             ),
             ...options.map((option) => DropdownMenuItem<String>(
-              value: option.value,
+              value: option.value.startsWith('---') ? null : option.value,
+              enabled: !option.value.startsWith('---'),
               child: Text(
                 option.label,
+                style: option.value.startsWith('---')
+                    ? TextStyle(color: AppColors.secondaryText.withOpacity(0.7))
+                    : null,
                 overflow: TextOverflow.ellipsis,
               ),
             )),

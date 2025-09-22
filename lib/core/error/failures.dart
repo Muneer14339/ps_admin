@@ -1,4 +1,3 @@
-// lib/core/error/failures.dart
 import 'package:equatable/equatable.dart';
 
 abstract class Failure extends Equatable {
@@ -11,20 +10,54 @@ abstract class Failure extends Equatable {
 class AuthFailure extends Failure {
   final String message;
   const AuthFailure(this.message);
+
   @override
   List<Object> get props => [message];
+
+  @override
+  String toString() => message;
+}
+
+class NetworkFailure extends Failure {
+  final String message;
+  const NetworkFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+
+  @override
+  String toString() => message;
+}
+
+class ValidationFailure extends Failure {
+  final String message;
+  const ValidationFailure(this.message);
+
+  @override
+  List<Object> get props => [message];
+
+  @override
+  String toString() => message;
 }
 
 class FileFailure extends Failure {
   final String message;
   const FileFailure(this.message);
+
   @override
   List<Object> get props => [message];
+
+  @override
+  String toString() => message;
 }
 
 class PermissionFailure extends Failure {
   final String message;
   const PermissionFailure(this.message);
+
   @override
   List<Object> get props => [message];
+
+  @override
+  String toString() => message;
 }

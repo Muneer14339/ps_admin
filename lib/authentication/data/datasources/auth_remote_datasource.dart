@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../core/error/firebase_error_handler.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
   Future<UserModel> signup(String firstName, String email, String password, String? location);
-  Future<UserModel> signInWithGoogle(); // NEW
+  Future<UserModel> signInWithGoogle();
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
 }
@@ -14,174 +15,183 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
-  final GoogleSignIn googleSignIn; // NEW
+  final GoogleSignIn googleSignIn;
 
   AuthRemoteDataSourceImpl({
     required this.firebaseAuth,
     required this.firestore,
-    required this.googleSignIn, // NEW
+    required this.googleSignIn,
   });
 
   @override
   Future<UserModel> login(String email, String password) async {
-    final result = await firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final result = await firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    if (result.user != null) {
-      await firestore.collection('users').doc(result.user!.uid).update({
-        'currentlyLogin': 'PA',
-      });
+      if (result.user != null) {
+        await firestore.collection('users').doc(result.user!.uid).update({
+          'currentlyLogin': 'PA',
+        });
 
-      final userDoc = await firestore
-          .collection('users')
-          .doc(result.user!.uid)
-          .get();
+        final userDoc = await firestore
+            .collection('users')
+            .doc(result.user!.uid)
+            .get();
 
-      if (userDoc.exists) {
-        return UserModel.fromFirestore(userDoc.data()!, result.user!.uid);
+        if (userDoc.exists) {
+          return UserModel.fromFirestore(userDoc.data()!, result.user!.uid);
+        } else {
+          return UserModel.fromFirebaseUser(result.user!);
+        }
       } else {
-        return UserModel.fromFirebaseUser(result.user!);
+        throw Exception('Login failed');
       }
-    } else {
-      throw Exception('Login failed');
+    } catch (e) {
+      throw Exception(FirebaseErrorHandler.getAuthErrorMessage(e));
     }
   }
 
   @override
   Future<UserModel> signup(String firstName, String email, String password, String? location) async {
     try {
-      final existingMethods = await firebaseAuth.isSignInWithEmailLink(email);
-      if (existingMethods) {
-        throw Exception('User already exists with this email');
+      final result = await firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (result.user != null) {
+        await result.user!.updateDisplayName(firstName);
+        await result.user!.reload();
+
+        final userData = {
+          'uid': result.user!.uid,
+          'email': email,
+          'firstName': firstName,
+          'location': location,
+          'createdAt': FieldValue.serverTimestamp(),
+          'role': 0,
+          'registeredFrom': 'PA',
+          'currentlyLogin': 'PA',
+          'password': password
+        };
+
+        await firestore
+            .collection('users')
+            .doc(result.user!.uid)
+            .set(userData);
+
+        return UserModel.fromSignup(
+            uid: result.user!.uid,
+            email: email,
+            firstName: firstName,
+            location: location,
+            createdAt: DateTime.now(),
+            registeredFrom: 'PA',
+            currentlyLogin: 'PA'
+        );
+      } else {
+        throw Exception('Signup failed');
       }
     } catch (e) {
-      if (e.toString().contains('already exists')) {
-        rethrow;
-      }
-    }
-
-    final result = await firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-
-    if (result.user != null) {
-      await result.user!.updateDisplayName(firstName);
-      await result.user!.reload();
-
-      final userData = {
-        'uid': result.user!.uid,
-        'email': email,
-        'firstName': firstName,
-        'location': location,
-        'createdAt': FieldValue.serverTimestamp(),
-        'role': 0,
-        'registeredFrom': 'PA',
-        'currentlyLogin': 'PA',
-        'password': password
-      };
-
-      await firestore
-          .collection('users')
-          .doc(result.user!.uid)
-          .set(userData);
-
-      return UserModel.fromSignup(
-          uid: result.user!.uid,
-          email: email,
-          firstName: firstName,
-          location: location,
-          createdAt: DateTime.now(),
-          registeredFrom: 'PA',
-          currentlyLogin: 'PA'
-      );
-    } else {
-      throw Exception('Signup failed');
+      throw Exception(FirebaseErrorHandler.getAuthErrorMessage(e));
     }
   }
 
   @override
   Future<UserModel> signInWithGoogle() async {
-    // Google Sign In process
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      throw Exception('Google Sign In cancelled');
-    }
-
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final result = await firebaseAuth.signInWithCredential(credential);
-
-    if (result.user != null) {
-      final user = result.user!;
-
-      // Check if user already exists in Firestore
-      final userDoc = await firestore.collection('users').doc(user.uid).get();
-
-      if (userDoc.exists) {
-        // Existing user - just update currentlyLogin
-        await firestore.collection('users').doc(user.uid).update({
-          'currentlyLogin': 'PA',
-        });
-
-        return UserModel.fromFirestore(userDoc.data()!, user.uid);
-      } else {
-        // New user - create profile in Firestore
-        final userData = {
-          'uid': user.uid,
-          'email': user.email ?? '',
-          'firstName': user.displayName ?? 'Google User',
-          'location': null,
-          'createdAt': FieldValue.serverTimestamp(),
-          'role': 0,
-          'registeredFrom': 'PA',
-          'currentlyLogin': 'PA',
-        };
-
-        await firestore.collection('users').doc(user.uid).set(userData);
-
-        return UserModel.fromSignup(
-            uid: user.uid,
-            email: user.email ?? '',
-            firstName: user.displayName ?? 'Google User',
-            location: null,
-            createdAt: DateTime.now(),
-            registeredFrom: 'PA',
-            currentlyLogin: 'PA'
-        );
+    try {
+      // Google Sign In process
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Sign-in was cancelled');
       }
-    } else {
-      throw Exception('Google Sign In failed');
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final result = await firebaseAuth.signInWithCredential(credential);
+
+      if (result.user != null) {
+        final user = result.user!;
+
+        // Check if user already exists in Firestore
+        final userDoc = await firestore.collection('users').doc(user.uid).get();
+
+        if (userDoc.exists) {
+          // Existing user - just update currentlyLogin
+          await firestore.collection('users').doc(user.uid).update({
+            'currentlyLogin': 'PA',
+          });
+
+          return UserModel.fromFirestore(userDoc.data()!, user.uid);
+        } else {
+          // New user - create profile in Firestore
+          final userData = {
+            'uid': user.uid,
+            'email': user.email ?? '',
+            'firstName': user.displayName ?? 'Google User',
+            'location': null,
+            'createdAt': FieldValue.serverTimestamp(),
+            'role': 0,
+            'registeredFrom': 'PA',
+            'currentlyLogin': 'PA',
+          };
+
+          await firestore.collection('users').doc(user.uid).set(userData);
+
+          return UserModel.fromSignup(
+              uid: user.uid,
+              email: user.email ?? '',
+              firstName: user.displayName ?? 'Google User',
+              location: null,
+              createdAt: DateTime.now(),
+              registeredFrom: 'PA',
+              currentlyLogin: 'PA'
+          );
+        }
+      } else {
+        throw Exception('Google Sign In failed');
+      }
+    } catch (e) {
+      throw Exception(FirebaseErrorHandler.getAuthErrorMessage(e));
     }
   }
 
   @override
   Future<void> logout() async {
-    await googleSignIn.signOut(); // NEW
-    await firebaseAuth.signOut();
+    try {
+      await googleSignIn.signOut();
+      await firebaseAuth.signOut();
+    } catch (e) {
+      throw Exception(FirebaseErrorHandler.getAuthErrorMessage(e));
+    }
   }
 
   @override
   Future<UserModel?> getCurrentUser() async {
-    final user = firebaseAuth.currentUser;
-    if (user != null) {
-      final userDoc = await firestore
-          .collection('users')
-          .doc(user.uid)
-          .get();
+    try {
+      final user = firebaseAuth.currentUser;
+      if (user != null) {
+        final userDoc = await firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
-      if (userDoc.exists) {
-        return UserModel.fromFirestore(userDoc.data()!, user.uid);
-      } else {
-        return UserModel.fromFirebaseUser(user);
+        if (userDoc.exists) {
+          return UserModel.fromFirestore(userDoc.data()!, user.uid);
+        } else {
+          return UserModel.fromFirebaseUser(user);
+        }
       }
+      return null;
+    } catch (e) {
+      throw Exception(FirebaseErrorHandler.getFirestoreErrorMessage(e));
     }
-    return null;
   }
 }
